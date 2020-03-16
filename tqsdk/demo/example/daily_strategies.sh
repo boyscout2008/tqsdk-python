@@ -15,10 +15,10 @@
 #震荡品种两波多滞涨
 #偏空震荡品种1波两浪多
 
-if test ! -z "$(cat /e/proj-futures-2019/log/"`date +%Y%m%d.log`" |grep error)"; then
+if test ! -z "$(cat /e/proj-futures/logs/"`date +%Y%m%d.log`" |grep error)"; then
     echo "Unexpected errors."
 else
-    if  test ! -z "$(cat /e/proj-futures-2019/log/"`date +%Y%m%d.log`" |grep Starting)"; then
-        cat /e/proj-futures-2019/log/20200316.log |grep MYSTRATEGY > /e/proj-futures-2019/log/"`date +strategy-%Y%m%d.txt`"
+    if  test ! -z "$(cat /e/proj-futures/logs/"`date +%Y%m%d.log`" |grep Starting)"; then
+        cat /e/proj-futures/logs/20200316.log |grep MYSTRATEGY > /e/proj-futures/output/"`date +strategy-%Y%m%d.txt`"
     fi
 fi

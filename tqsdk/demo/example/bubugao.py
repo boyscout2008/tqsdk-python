@@ -9,10 +9,8 @@ __author__ = 'Golden'
 import time, datetime, sys, os.path
 import logging
 from tqsdk import TqApi, TqSim, TqBacktest #, TargetPosTask
-#from tqsdk.ta import MA
 from datetime import date
 import matplotlib.pyplot as plt
-import base
 import talib
 import argparse
 
@@ -36,8 +34,6 @@ def get_index_m(quote, klines):
     m = 0
     k_high = 0
 
-    #if len(klines) < 20:
-    #    return m
     df = klines.to_dataframe()
     if len(df) <20:
         return m
@@ -62,8 +58,6 @@ def get_index_m(quote, klines):
     else: 
         return 0, 0
 
-# 周期参数
-NDAYS = 6  # 5天不收新高，亦可降低至4
 
 rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
 curDay = time.strftime('%Y%m%d', time.localtime(time.time()))
@@ -73,21 +67,11 @@ tradingDay = curDay
 
 #TODO: 用sdk获取当前是否交易日，是否有夜盘
 
-if curDate>4: # weekend
-    pass#exit(0)
-elif curDate==4: # friday
-    if int(curHour)>=15:
-        tradingDay = (datetime.datetime.now() + datetime.timedelta(days=3)).strftime('%Y%m%d')
-else:
-    if int(curHour)>=15:
-        tradingDay =  (datetime.datetime.now() + datetime.timedelta(days=1)).strftime('%Y%m%d')
-
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures-2019/log/'
+log_path = 'E://proj-futures/logs/'
 log_name = log_path + tradingDay + '.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')
@@ -102,16 +86,11 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-#logger.info(time.localtime( time.time()))
-#curTime = time.strftime('%H:%M', time.localtime(time.time()))
-#logger.info("program start_time: "+curTime)
 
 ### 交易信号汇总
 k_high = 0
 last_k_high = 0 
 trading_date = ''
-pre_trading_date = ''
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
@@ -126,32 +105,20 @@ logger.info("Starting bubugao strategy for: %s"%SYMBOL)
 # TODO：交易账号替换模拟账号
 #SYMBOL = "DCE.p2005"  # 合约代码 # SHFE.cu1812  CZCE.AP005
 api = TqApi(TqSim())
-#api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2019, 11, 20), end_dt=date(2020, 3, 8))) 
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)
-#ticks = api.get_tick_serial(SYMBOL)
 quote = api.get_quote(SYMBOL)
-
-#index = get_index_m(quote, klines)
 
 while True:
     api.wait_update()
-    
-    #curTime = time.strftime('%H:%M', time.localtime(time.time()))
-    #curHour = time.strftime('%H', time.localtime(time.time()))
-    #curMinute = time.strftime('%M', time.localtime(time.time()))
 
-
-    # 跟踪log信息，日k数据会产生两个信号：一个是开盘时，另一个时收盘；如果想根据收盘k线分析前期趋势，用第二个信号
-    # 这样就没有之前认为必须开盘才能分析之前所存在的趋势型机会了。
-    # 实盘是只要14：59触发即可
+    # 实盘是只要14：59触发或盘后任何时间触发运行一次即可
     if api.is_changing(klines):
         df = klines.to_dataframe()
 
         #logger.info("DEBUG: high is %s, close is %f"%(klines[-1]["high"], klines[-1]["close"]))
         trading_date = get_market_day(klines[-1]["datetime"])
         #logger.info("DATE: %s, close: %f"%(get_market_day(klines[-1]["datetime"]), klines[-1]["close"]))
-        #df_30mins = df[-30:]
-        #curClose = klines[-1]["close"]
+
         # STEP1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
         #logger.info("DEBUG: high is %s, close is %f"%(klines[-1]["high"], klines[-1]["close"]))
         index, k_high = get_index_m(quote, klines)

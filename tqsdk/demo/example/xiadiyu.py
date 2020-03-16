@@ -18,10 +18,8 @@ step2：判断最近4~8日偏空调整，另外趋空日必定收在5日线上�
 import time, datetime, sys, os.path
 import logging
 from tqsdk import TqApi, TqSim, TqBacktest #, TargetPosTask
-#from tqsdk.ta import MA
 from datetime import date
 import matplotlib.pyplot as plt
-import base
 import talib
 import argparse
 
@@ -81,21 +79,11 @@ tradingDay = curDay
 
 #TODO: 用sdk获取当前是否交易日，是否有夜盘
 
-if curDate>4: # weekend
-    pass#exit(0)
-elif curDate==4: # friday
-    if int(curHour)>=15:
-        tradingDay = (datetime.datetime.now() + datetime.timedelta(days=3)).strftime('%Y%m%d')
-else:
-    if int(curHour)>=15:
-        tradingDay =  (datetime.datetime.now() + datetime.timedelta(days=1)).strftime('%Y%m%d')
-
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures-2019/log/'
+log_path = 'E://proj-futures/logs/'
 log_name = log_path + tradingDay + '.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')
@@ -114,7 +102,6 @@ logger.addHandler(ch)
 k_low = 0
 last_k_low = 0 
 trading_date = ''
-pre_trading_date = ''
 
 
 parser = argparse.ArgumentParser()
@@ -127,12 +114,8 @@ else:
     SYMBOL = "DCE.i1909"
 
 logger.info("Starting xiadiyu strategy for: %s"%SYMBOL)
-# TODO：交易账号替换模拟账号
-#SYMBOL = "DCE.p2005"  # 合约代码
+
 api = TqApi(TqSim())
-#api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2018, 7, 20), end_dt=date(2018, 12, 1))) 
-#api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2018, 11, 20), end_dt=date(2019, 4, 1)))
-#api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2019, 3, 20), end_dt=date(2019, 8, 1)))
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)    
 #ticks = api.get_tick_serial(SYMBOL)
 quote = api.get_quote(SYMBOL)
@@ -142,7 +125,7 @@ while True:
 
     # 跟踪log信息，日k数据会产生两个信号：一个是开盘时，另一个时收盘；如果想根据收盘k线分析前期趋势，用第二个信号
     # 这样就没有之前认为必须开盘才能分析之前所存在的趋势型机会了。
-    # 实盘是只要14：59触发即可
+    # 实盘是只要14：59或盘后任何时间触发运行即可，一次退出
     if api.is_changing(klines):
         df = klines.to_dataframe()
 

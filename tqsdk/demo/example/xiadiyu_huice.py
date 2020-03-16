@@ -18,7 +18,7 @@ from tqsdk import TqApi, TqSim, TqBacktest #, TargetPosTask
 #from tqsdk.ta import MA
 from datetime import date
 import matplotlib.pyplot as plt
-import base
+#import base
 import talib
 import argparse
 
@@ -92,7 +92,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures-2019/log/'
+log_path = 'E://proj-futures/logs/'
 log_name = log_path + tradingDay + '.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')

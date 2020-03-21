@@ -19,41 +19,8 @@ from tqsdk import TqApi, TqSim, TqBacktest #, TargetPosTask
 from datetime import date
 import matplotlib.pyplot as plt
 import bases
-import talib
+import stgy4short
 import argparse
-
-#返回近期一波多的收新低阴线
-def get_index_m(quote, klines):
-    m = 0
-    k_low = 0
-
-    df = klines.to_dataframe()
-    if len(df) <20:
-        return m
-    #logger.info("klines.low: %f, klines.close: %f" % (klines.low[-1], klines.close[-1]))
-    #STEP1：遍历找出最后一波空的收新低阴线日
-    ma5 = talib.MA(df.close, timeperiod=5) 
-    ma10 =  talib.MA(df.close, timeperiod=10)
-    for i in range(9, 20): #只看最近的一波空，前面数据用于计算MA
-        pre3LL =  min(klines.low[i-3:i])  # 前3日最低价
-        if klines.close[i] < pre3LL and klines.close[i]<klines.open[i] and klines.close[i] < ma5[i]*0.985 and klines.close[i] < ma10[i]*0.985:
-            #logger.info("ma5: %f, ma10: %f, df.close: %f, pre3LL:%f" % (ma5[i], ma10[i], df.close[i], pre3LL))
-            m = i
-            k_low = klines.close[i]
-    
-
-    # STEP2：判断最近4~8日偏空调整，另外趋多日必定收在5日线的阴线，用以确定下地狱信号
-    # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空
-    # 改进：很多都是不规则第二波空，只要是承压10日线，且是主空或已破位多转空的第二波就可以认为是下地狱
-    # 判断n-m>=5， <= 9即可 
-    if (m > 10 and m <= 15) and (klines.close[m+1:20]<=ma10[m+1:20]).all(): #and klines.close[-1] <= ma5[len(df)-1]: #8,7,5日偏空调整
-        #logger.info("ma5: %f, ma10: %f, df.close: %f" % (ma5[len(df)-1], ma10[len(df)-1], df.close[i]))
-        return m, k_low
-    else: 
-        return 0, 0
-
-# 周期参数
-NDAYS = 6  # 5天不收新高，亦可降低至4
 
 rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
 curDay = time.strftime('%Y%m%d', time.localtime(time.time()))
@@ -92,7 +59,7 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-### 交易信号汇总
+#STEP1: 交易信号汇总
 k_low = 0
 last_k_low = 0 
 trading_date = ''
@@ -101,20 +68,34 @@ pre_trading_date = ''
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
+parser.add_argument('--YEAR')
 args = parser.parse_args()
 
 if args.SYMBOL != None:
     SYMBOL = args.SYMBOL
 else:
-    SYMBOL = "DCE.i1909"
+    SYMBOL = "DCE.i2005" # fake contract
 
-logger.info("Starting xiadiyu strategy for: %s"%SYMBOL)
-# TODO：交易账号替换模拟账号
-#SYMBOL = "DCE.p2005"  # 合约代码
-#api = TqApi(TqSim())
-#api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2018, 7, 20), end_dt=date(2018, 12, 1))) 
-#api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2018, 11, 20), end_dt=date(2019, 4, 1)))
-api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2019, 3, 20), end_dt=date(2019, 8, 1)))
+if args.YEAR != None:
+    YEAR = int(args.YEAR)
+else:
+    YEAR = 2020 #TODO：取当年值
+
+#parse and decide time duration for backtesting
+#有些主力合约不分年份，分析月份后2015年开始逐年回测
+if SYMBOL.endswith('01'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 7, 20), end_dt=date(YEAR-1, 12, 1)))
+elif SYMBOL.endswith('05'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR, 4, 1)))
+elif SYMBOL.endswith('09'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR, 3, 20), end_dt=date(YEAR, 8, 1)))
+else:
+    logger.info("Not supported contract: %s"%SYMBOL)
+    exit(1)
+
+#STEP2：策略执行log
+logger.info("Starting xiadiyu strategy for: %s, actually year: %d"%(SYMBOL, YEAR))
+
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)    
 #ticks = api.get_tick_serial(SYMBOL)
 quote = api.get_quote(SYMBOL)
@@ -133,13 +114,9 @@ while True:
             pre_trading_date = trading_date
             continue
 
-        #now = datetime.datetime.strptime(quote["datetime"], "%Y-%m-%d %H:%M:%S.%f")  # 当前quote的时间
-        #curTime = now
-        #curHour = now.hour
-        #curMinute = now.minute
-
+        #STEP3-策略型机会判定
         #logger.info("DATE: %s, close: %f"%(bases.get_market_day(klines[-1]["datetime"]), klines[-1]["close"]))
-        index, k_low = get_index_m(quote, klines)
+        index, k_low = stgy4short.get_index_m(quote, klines)
         #logger.info("xiadiyu date: %s, adjust interval: %d" %(trading_date, 20 - index - 1))
         # TODO：判定趋空日的品质
         if index == 11 or index == 12 or index == 14: #8,7,5日偏空调整

@@ -64,3 +64,26 @@ def parse_klines_sg(quote, klines, logger):
             and klines.high[-1] >  ma5[5]*0.99:
             return True
     return False
+
+#夸父逼阴：根据输入的破位点和中强支撑位判断逼阴机会
+#形态1：多转空，有高位滞涨或2波筑顶过程，破位即信号
+#形态2：主空品种，有反弹承压滞涨过程转空后，破位局部支撑位
+def parse_klines_by(quote, klines, zhicheng1, zhicheng2, logger):
+    df = klines.to_dataframe()
+    if len(df) <20:
+        return False
+
+    if zhicheng1 < zhicheng2*1.05:
+        return False
+
+    ma5 = talib.MA(df.close, timeperiod=5) 
+    ma10 =  talib.MA(df.close, timeperiod=10)
+    
+    #STEP1：判断当前中大阴是否破位前期支撑位
+    #logger.info("zhicheng1: %f, zhicheng2: %f, ma5: %f"%(zhicheng1, zhicheng2, ma5[19]))
+    if klines.close[-1] < zhicheng1 and klines.close[-1] < klines.open[-1]*0.985 and klines.close[-1] < klines.low[-2]:
+        #STEP2：非背离k线 + 未大破位 + 破位后向下有空间
+        if klines.open[-1] > ma5[19]*0.98 and klines.close[-1] > zhicheng1*0.98 and klines.close[-1] > zhicheng2*1.05: 
+            return True
+
+    return False

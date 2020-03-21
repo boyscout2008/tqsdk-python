@@ -3,52 +3,17 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号
+步步高-回测
 '''
 
 import time, datetime, sys, os.path
 import logging
 from tqsdk import TqApi, TqSim, TqBacktest #, TargetPosTask
-#from tqsdk.ta import MA
 from datetime import date
 import matplotlib.pyplot as plt
 import bases
-import talib
+import stgy4long
 import argparse
-
-#返回近期一波多的收新高阳线
-def get_index_m(quote, klines):
-    m = 0
-    k_high = 0
-
-    #if len(klines) < 20:
-    #    return m
-    df = klines.to_dataframe()
-    if len(df) <20:
-        return m
-    #logger.info("klines.high: %f, klines.close: %f" % (klines.high[-1], klines.close[-1]))
-    #STEP1：遍历找出最后一波多的收新高阳线日
-    ma5 = talib.MA(df.close, timeperiod=5) 
-    ma10 =  talib.MA(df.close, timeperiod=10)
-    for i in range(9, 20): #只看最近的一波多，前面数据用于计算MA
-        pre3HH =  max(klines.high[i-3:i])  # 前3日最高价
-        if klines.close[i] > pre3HH and klines.close[i]>klines.open[i] and klines.close[i] > ma5[i]*1.015 and klines.close[i] > ma10[i]*1.015:
-            #logger.info("ma5: %f, ma10: %f, df.close: %f, pre3HH:%f" % (ma5[i], ma10[i], df.close[i], pre3HH))
-            m = i
-            k_high = klines.close[i]
-    
-
-    # STEP2：判断最近4~8日偏多调整，另外趋多日必定收在5日线上，用以确定步步高信号
-    # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空
-    # 判断n-m>=5， <= 9即可 
-    if (m > 10 and m <= 15) and (klines.close[m+1:20]>=ma10[m+1:20]).all() and klines.close[-1] >= ma5[len(df)-1]: #8,7,5日偏多调整
-        #logger.info("ma5: %f, ma10: %f, df.close: %f" % (ma5[len(df)-1], ma10[len(df)-1], df.close[i]))
-        return m, k_high
-    else: 
-        return 0, 0
-
-# 周期参数
-NDAYS = 6  # 5天不收新高，亦可降低至4
 
 rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
 curDay = time.strftime('%Y%m%d', time.localtime(time.time()))
@@ -56,7 +21,7 @@ curHour = time.strftime('%H', time.localtime(time.time()))
 curDate = datetime.datetime.now().weekday()
 tradingDay = curDay
 
-#TODO: 用sdk获取当前是否交易日，是否有夜盘
+#这个data根交易日无关，用于标记策略执行时间，实际策略型机会会在策略执行中提醒
 
 if curDate>4: # weekend
     pass#exit(0)
@@ -87,11 +52,7 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-#logger.info(time.localtime( time.time()))
-#curTime = time.strftime('%H:%M', time.localtime(time.time()))
-#logger.info("program start_time: "+curTime)
-
-### 交易信号汇总
+#STEP1：交易信号汇总
 k_high = 0
 last_k_high = 0 
 trading_date = ''
@@ -100,31 +61,40 @@ pre_trading_date = ''
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
+parser.add_argument('--YEAR')
 args = parser.parse_args()
 
 if args.SYMBOL != None:
     SYMBOL = args.SYMBOL
 else:
-    SYMBOL = "DCE.i2005"
+    SYMBOL = "DCE.i2005" # fake contract
 
-logger.info("Starting bubugao strategy for: %s"%SYMBOL)
-# TODO：交易账号替换模拟账号
-#SYMBOL = "DCE.p2005"  # 合约代码
-#api = TqApi(TqSim())
-api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(2019, 11, 20), end_dt=date(2020, 3, 8))) 
+if args.YEAR != None:
+    YEAR = int(args.YEAR)
+else:
+    YEAR = 2020 #TODO：取当年值
+
+#parse and decide time duration for backtesting
+#有些主力合约不分年份，分析月份后2015年开始逐年回测
+if SYMBOL.endswith('01'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 7, 20), end_dt=date(YEAR-1, 12, 1)))
+elif SYMBOL.endswith('05'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR, 4, 1)))
+elif SYMBOL.endswith('09'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR, 3, 20), end_dt=date(YEAR, 8, 1)))
+else:
+    logger.info("Not supported contract: %s"%SYMBOL)
+    exit(1)
+
+#STEP2：策略执行log
+logger.info("Starting bubugao strategy for: %s, actually year: %d"%(SYMBOL, YEAR))
+
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)
 #ticks = api.get_tick_serial(SYMBOL)
 quote = api.get_quote(SYMBOL)
 
-#index = get_index_m(quote, klines)
-
 while True:
     api.wait_update()
-    
-    #curTime = time.strftime('%H:%M', time.localtime(time.time()))
-    #curHour = time.strftime('%H', time.localtime(time.time()))
-    #curMinute = time.strftime('%M', time.localtime(time.time()))
-
 
     # 跟踪log信息，日k数据会产生两个信号：一个是开盘时，另一个是收盘；如果想根据收盘k线分析前期趋势，用第二个信号
     # 这样就没有之前认为必须开盘才能分析之前所存在的趋势型机会了。
@@ -137,19 +107,11 @@ while True:
             pre_trading_date = trading_date
             continue
 
-        now = datetime.datetime.strptime(quote["datetime"], "%Y-%m-%d %H:%M:%S.%f")  # 当前quote的时间
-        curTime = now
-        curHour = now.hour
-        curMinute = now.minute
-
+        #STEP3:策略型机会判定
         #logger.info("DATE: %s, close: %f"%(bases.get_market_day(klines[-1]["datetime"]), klines[-1]["close"]))
-        #df_30mins = df[-30:]
-        #curClose = klines[-1]["close"]
-        # STEP1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
-        #logger.info("BBB: %s, %f"%(klines[-1]["high"], klines[-1]["close"]));
-        index, k_high = get_index_m(quote, klines)
-        #logger.info("BUBUGAO date: %s, adjust interval: %d" %(trading_date, 20 - index - 1))
-        # STEP2：判断最近4~8日偏多调整
+        # STEP3.1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
+        index, k_high = stgy4long.get_index_m(quote, klines)
+        # STEP3.2：判断最近4~8日偏多调整
         # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空
         # 判断n-m>=5， <= 9即可
         if index == 11 or index == 12 or index == 14: #8,7,5日偏多调整
@@ -158,9 +120,6 @@ while True:
             logger.info("NORMAL BUBUGAO date: %s, for %s, adjust interval: %d" %(trading_date, SYMBOL, 20 - index - 1))
         else:
             continue
-        #if  index > 10 and index <= 15: #and last_k_high != k_high:  #最多8日调整，最少4日调整
-            #logger.info("date: %s, df.open: %f, k_high: %f" % (get_market_day(klines[-1]["datetime"]), klines[-1]["close"], k_high))
-            #last_k_high = k_high
 
 api.close()
 logger.removeHandler(fh)

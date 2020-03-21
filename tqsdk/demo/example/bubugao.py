@@ -3,7 +3,7 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号
+步步高 - 实盘
 '''
 
 import time, datetime, sys, os.path
@@ -12,38 +12,8 @@ from tqsdk import TqApi, TqSim, TqBacktest #, TargetPosTask
 from datetime import date
 import matplotlib.pyplot as plt
 import bases
-import talib
+import stgy4long
 import argparse
-
-#返回近期一波多的收新高阳线
-def get_index_m(quote, klines):
-    m = 0
-    k_high = 0
-
-    df = klines.to_dataframe()
-    if len(df) <20:
-        return m
-    #logger.info("klines.high: %f, klines.close: %f" % (klines.high[-1], klines.close[-1]))
-    #STEP1：遍历找出最后一波多的收新高阳线日
-    ma5 = talib.MA(df.close, timeperiod=5) 
-    ma10 =  talib.MA(df.close, timeperiod=10)
-    for i in range(9, 20): #只看最近的一波多，前面数据用于计算MA
-        pre3HH =  max(klines.high[i-3:i])  # 前3日最高价
-        if klines.close[i] > pre3HH and klines.close[i]>klines.open[i] and klines.close[i] > ma5[i]*1.015 and klines.close[i] > ma10[i]*1.015:
-            #logger.info("ma5: %f, ma10: %f, df.close: %f, pre3HH:%f" % (ma5[i], ma10[i], df.close[i], pre3HH))
-            m = i
-            k_high = klines.close[i]
-    
-
-    # STEP2：判断最近4~8日偏多调整，另外趋多日必定收在5日线上，用以确定步步高信号
-    # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空
-    # 判断n-m>=5， <= 9即可 
-    if (m > 10 and m <= 15) and (klines.close[m+1:20]>=ma10[m+1:20]).all() and klines.close[-1] >= ma5[len(df)-1]: #8,7,5日偏多调整
-        #logger.info("ma5: %f, ma10: %f, df.close: %f" % (ma5[len(df)-1], ma10[len(df)-1], df.close[i]))
-        return m, k_high
-    else: 
-        return 0, 0
-
 
 rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
 curDay = time.strftime('%Y%m%d', time.localtime(time.time()))
@@ -73,7 +43,7 @@ logger.addHandler(fh)
 logger.addHandler(ch)
 
 
-### 交易信号汇总
+#STEP1：交易信号汇总
 k_high = 0
 last_k_high = 0 
 trading_date = ''
@@ -85,11 +55,11 @@ args = parser.parse_args()
 if args.SYMBOL != None:
     SYMBOL = args.SYMBOL
 else:
-    SYMBOL = "DCE.i2005"
+    SYMBOL = "DCE.i2005" #用于开发时最新主力合约回测，实际通过参数传递比较好
 
+#STEP2-log
 logger.info("Starting bubugao strategy for: %s"%SYMBOL)
-# TODO：交易账号替换模拟账号
-#SYMBOL = "DCE.p2005"  # 合约代码 # SHFE.cu1812  CZCE.AP005
+
 api = TqApi(TqSim())
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)
 quote = api.get_quote(SYMBOL)
@@ -105,11 +75,12 @@ while True:
         trading_date = bases.get_market_day(klines[-1]["datetime"])
         #logger.info("DATE: %s, close: %f"%(bases.get_market_day(klines[-1]["datetime"]), klines[-1]["close"]))
 
-        # STEP1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
+        #STEP3-策略型机会判定
+        # STEP3.1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
         #logger.info("DEBUG: high is %s, close is %f"%(klines[-1]["high"], klines[-1]["close"]))
-        index, k_high = get_index_m(quote, klines)
+        index, k_high = stgy4long.get_index_m(quote, klines)
         #logger.info("BUBUGAO date: %s, adjust interval: %d" %(trading_date, 20 - index - 1))
-        # STEP2：判断最近4~8日偏多调整
+        # STEP3.2：判断最近4~8日偏多调整
         # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空
         # 判断n-m>=5， <= 9即可
         if index == 11 or index == 12 or index == 14: #8,7,5日偏多调整

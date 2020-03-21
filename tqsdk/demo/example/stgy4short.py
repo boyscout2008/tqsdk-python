@@ -36,3 +36,31 @@ def get_index_m(quote, klines):
         return m, k_low
     else: 
         return 0, 0
+
+#双鬼拍门：分析当前3根k线是否符合双鬼形态
+#形态1:未破位偏空蓄势期承压10日线，或主空反弹期期
+#形态2：主空未止跌承压5日线
+def parse_klines_sg(quote, klines, logger):
+
+    df = klines.to_dataframe()
+    if len(df) <20:
+        return False
+    #logger.info("klines.low: %f, klines.close: %f" % (klines.low[-1], klines.close[-1]))
+    ma5 = talib.MA(df.close, timeperiod=5) 
+    ma10 =  talib.MA(df.close, timeperiod=10)
+
+    #STEP1：判断3根k线
+    # 倒数第三根是小背离5，10日线的阴线，倒是第二根和第三根是阳线
+    if klines.open[-3] > klines.close[-3] and klines.close[-3] < ma10[17]*0.985 and klines.close[-3] < ma10[17]*0.99 \
+        and klines.close[-2] > klines.open[-2] and klines.close[-1] >  klines.open[-1]:
+        #倒数第二根和第一根是承压10日线，最后一根最高价要高于5日线，接近10日线
+        if klines.high[-1] > ma5[19] and  klines.high[-1] >  ma10[19]*0.99 \
+            and klines.close[-1] < ma10[19] and klines.close[-2] < ma10[18]:
+            #logger.info("close: %f, ma10: %f"%(klines[-1]["close"],ma10[19]))
+            return True
+        #未止跌 + 倒数第二根和第一根是承压5日线小阳线 + 最后一根最高价要接近5日线
+        if klines.close[-3] < klines.low[-4] \
+            and klines.close[-1] < ma5[19] and  klines.close[-2] < ma5[18] \
+            and klines.high[-1] >  ma10[5]*0.995 and klines.close[-1] > klines.open[-1]*0.006:
+            return True
+    return False

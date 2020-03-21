@@ -1,8 +1,6 @@
 #双鬼：主空或偏空品种的第一波空之后的下跌中继，或反弹滞涨多转空第一波空的蓄势阶段
 # 主流品种： 镍主力合约不规则，回测暂不考虑
-/d/Anaconda3/python shuanggui_huice.py --SYMBOL DCE.i1501 --YEAR 2015
-/d/Anaconda3/python shuanggui_huice.py --SYMBOL DCE.i1505 --YEAR 2015
-/d/Anaconda3/python shuanggui_huice.py --SYMBOL DCE.i1509 --YEAR 2015
+# NOTICE：2015年之前的数据无法回测
 /d/Anaconda3/python shuanggui_huice.py --SYMBOL DCE.i1601 --YEAR 2016
 /d/Anaconda3/python shuanggui_huice.py --SYMBOL DCE.i1605 --YEAR 2016
 /d/Anaconda3/python shuanggui_huice.py --SYMBOL DCE.i1609 --YEAR 2016

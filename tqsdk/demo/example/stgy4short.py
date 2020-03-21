@@ -54,13 +54,13 @@ def parse_klines_sg(quote, klines, logger):
     if klines.open[-3] > klines.close[-3] and klines.close[-3] < ma10[17]*0.985 and klines.close[-3] < ma10[17]*0.99 \
         and klines.close[-2] > klines.open[-2] and klines.close[-1] >  klines.open[-1]:
         #倒数第二根和第一根是承压10日线，最后一根最高价要高于5日线，接近10日线
-        if klines.high[-1] > ma5[19] and  klines.high[-1] >  ma10[19]*0.99 \
+        if klines.high[-1] > ma5[19] and  klines.high[-1] >  ma10[19]*0.985 \
             and klines.close[-1] < ma10[19] and klines.close[-2] < ma10[18]:
             #logger.info("close: %f, ma10: %f"%(klines[-1]["close"],ma10[19]))
             return True
         #未止跌 + 倒数第二根和第一根是承压5日线小阳线 + 最后一根最高价要接近5日线
         if klines.close[-3] < klines.low[-4] \
             and klines.close[-1] < ma5[19] and  klines.close[-2] < ma5[18] \
-            and klines.high[-1] >  ma10[5]*0.995 and klines.close[-1] > klines.open[-1]*0.006:
+            and klines.high[-1] >  ma5[5]*0.99:
             return True
     return False

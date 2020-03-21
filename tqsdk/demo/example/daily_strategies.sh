@@ -8,7 +8,11 @@
 #/d/Anaconda3/python xiadiyu.py --SYMBOL CZCE.CF005
 /d/Anaconda3/python xiadiyu.py --SYMBOL DCE.jd2005
 #/d/Anaconda3/python xiadiyu.py --SYMBOL CZCE.SR005
-#双鬼拍门
+#双鬼拍门：主空或偏空品种还在转空蓄势阶段和第一波空之后的品种只有鸡蛋，谨慎关注还未止跌的强空品种棕榈、棉花、苹果
+/d/Anaconda3/python xiadiyu.py --SYMBOL DCE.jd2005
+/d/Anaconda3/python shuanggui.py --SYMBOL DCE.p2005
+/d/Anaconda3/python xiadiyu.py --SYMBOL CZCE.CF005
+/d/Anaconda3/python xiadiyu.py --SYMBOL.CZCE.AP005
 #佛回头
 #夸父追阳
 #夸父逼阴

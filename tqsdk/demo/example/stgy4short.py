@@ -8,9 +8,10 @@ __author__ = 'Golden'
 import talib
 
 #下地狱：返回近期一波多的收新低阴线
-def get_index_m(quote, klines):
+def get_index_m(quote, klines, logger):
     m = 0
-    k_low = 0
+    k_low = 0.0
+    k_lowest = 0.0
 
     df = klines.to_dataframe()
     if len(df) <20:
@@ -21,10 +22,15 @@ def get_index_m(quote, klines):
     ma10 =  talib.MA(df.close, timeperiod=10)
     for i in range(9, 20): #只看最近的一波空，前面数据用于计算MA
         pre3LL =  min(klines.low[i-3:i])  # 前3日最低价
-        if klines.close[i] < pre3LL and klines.close[i]<klines.open[i] and klines.close[i] < ma5[i]*0.985 and klines.close[i] < ma10[i]*0.985:
+        if klines.close[i] < pre3LL and klines.close[i]<klines.open[i] \
+            and klines.close[i] < ma5[i]*0.985 and klines.close[i] < ma10[i]*0.985:
+            # 解决bug：一波空后的未破位宽幅震荡；如苹果2020.3.18，19
+            if k_lowest > 0 and klines.close[i] >= k_lowest:
+                continue 
             #logger.info("ma5: %f, ma10: %f, df.close: %f, pre3LL:%f" % (ma5[i], ma10[i], df.close[i], pre3LL))
             m = i
             k_low = klines.close[i]
+            k_lowest = klines.low[i]
     
 
     # STEP2：判断最近4~8日偏空调整，另外趋多日必定收在5日线的阴线，用以确定下地狱信号
@@ -35,7 +41,7 @@ def get_index_m(quote, klines):
         #logger.info("ma5: %f, ma10: %f, df.close: %f" % (ma5[len(df)-1], ma10[len(df)-1], df.close[i]))
         return m, k_low
     else: 
-        return 0, 0
+        return 0, 0.0
 
 #双鬼拍门：分析当前3根k线是否符合双鬼形态
 #形态1:未破位偏空蓄势期承压10日线，或主空反弹期期

@@ -78,7 +78,7 @@ while True:
         #STEP3-策略型机会判定
         # STEP3.1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
         #logger.info("DEBUG: high is %s, close is %f"%(klines[-1]["high"], klines[-1]["close"]))
-        index, k_high = stgy4long.get_index_m(quote, klines)
+        index, k_high = stgy4long.get_index_m(quote, klines, logger)
         #logger.info("BUBUGAO date: %s, adjust interval: %d" %(trading_date, 20 - index - 1))
         # STEP3.2：判断最近4~8日偏多调整
         # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空

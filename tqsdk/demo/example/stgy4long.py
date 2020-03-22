@@ -9,9 +9,9 @@ __author__ = 'Golden'
 import talib
 
 #步步高策略：返回近期一波多的收新高阳线
-def get_index_m(quote, klines):
+def get_index_m(quote, klines, logger):
     m = 0
-    k_high = 0
+    k_high = 0.0
 
     df = klines.to_dataframe()
     if len(df) <20:
@@ -35,4 +35,4 @@ def get_index_m(quote, klines):
         #logger.info("ma5: %f, ma10: %f, df.close: %f" % (ma5[len(df)-1], ma10[len(df)-1], df.close[i]))
         return m, k_high
     else: 
-        return 0, 0
+        return 0, 0.0

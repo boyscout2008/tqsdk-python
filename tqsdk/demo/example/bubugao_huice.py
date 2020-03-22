@@ -110,7 +110,7 @@ while True:
         #STEP3:策略型机会判定
         #logger.info("DATE: %s, close: %f"%(bases.get_market_day(klines[-1]["datetime"]), klines[-1]["close"]))
         # STEP3.1: 找出20日内最近一波多的最高收盘价日m：收近4日新高+背离5，10日线+ 收阳线；
-        index, k_high = stgy4long.get_index_m(quote, klines)
+        index, k_high = stgy4long.get_index_m(quote, klines, logger)
         # STEP3.2：判断最近4~8日偏多调整
         # n-m=6就是5日偏多调整后的主多，首选它，当然亦可n-m=5就开始考虑，但当心是高位滞涨后的空
         # 判断n-m>=5， <= 9即可

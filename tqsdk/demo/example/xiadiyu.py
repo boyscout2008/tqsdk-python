@@ -88,7 +88,7 @@ while True:
         trading_date = bases.get_market_day(klines[-1]["datetime"])
 
          #STEP3-策略型机会判定
-        index, k_low = stgy4short.get_index_m(quote, klines)
+        index, k_low = stgy4short.get_index_m(quote, klines, logger)
         #logger.info("xiadiyu date: %s, adjust interval: %d" %(trading_date, 20 - index - 1))
         # TODO：判定趋空日的品质
         if index == 11 or index == 12 or index == 14: #8,7,5日偏空调整

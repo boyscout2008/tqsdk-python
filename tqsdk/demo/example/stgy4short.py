@@ -87,3 +87,38 @@ def parse_klines_by(quote, klines, zhicheng1, zhicheng2, logger):
             return True
 
     return False
+
+
+#佛回头形态1:经过2波或一波两浪多高位滞涨转空
+def parse_klines_fht_xiaoyin(quote, klines, logger):
+
+    df = klines.to_dataframe()
+    if len(df) <20:
+        return False
+    #logger.info("klines.low: %f, klines.close: %f" % (klines.low[-1], klines.close[-1]))
+    ma5 = talib.MA(df.close, timeperiod=5) 
+    ma10 =  talib.MA(df.close, timeperiod=10)
+
+    #近3日5日线高于10日线 + 8根k线前6日有破5线的阴线 + 当日穿透5,10日线，收-2%以内中小阴
+    if (ma10[17:20] < ma5[17:20]).all() and (klines.close[12:18] < ma5[12:18]).any() and  (klines.close[12:18] > ma5[12:18]).any() \
+        and klines.close[18] > ma5[18] and klines.close[18] > ma10[18] \
+        and klines.open[19] > ma5[19] and klines.open[19] > ma10[19] and  klines.close[19] < ma5[19] \
+        and klines.open[19] < klines.close[19]*1.02:
+        return True
+    return False
+
+#佛回头形态2
+def parse_klines_fht_xiaoyang(quote, klines, logger):
+    df = klines.to_dataframe()
+    if len(df) <20:
+        return False
+    #logger.info("klines.low: %f, klines.close: %f" % (klines.low[-1], klines.close[-1]))
+    ma5 = talib.MA(df.close, timeperiod=5) 
+    ma10 =  talib.MA(df.close, timeperiod=10)
+
+    #昨日走在5日线下 + 前3日五日均线有大于10日均线 + 当日收中小阳线 + 且承压10日线
+    if klines.close[18] < ma5[18] and (ma5[16:19] > ma10[16:19]).any() \
+        and klines.close[19] > klines.open[19]*1.005 \
+        and klines.close[19] < ma10[19] and klines.close[19] > ma10[19]*0.985:
+        return True
+    return False

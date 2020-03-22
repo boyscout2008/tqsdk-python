@@ -69,12 +69,12 @@ else:
     SYMBOL = "DCE.i2005"
 
 if args.ZC1 != None:
-    ZC1 = args.ZC1
+    ZC1 = float(args.ZC1)
 else:
     ZC1 = 0.0
 
 if args.ZC2 != None:
-    ZC2 = args.ZC2
+    ZC2 = float(args.ZC2)
 else:
     ZC2 = 0.0
 

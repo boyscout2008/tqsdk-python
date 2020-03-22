@@ -12,6 +12,7 @@ import talib
 def get_index_m(quote, klines, logger):
     m = 0
     k_high = 0.0
+    k_highest = 0.0
 
     df = klines.to_dataframe()
     if len(df) <20:
@@ -24,8 +25,12 @@ def get_index_m(quote, klines, logger):
         pre3HH =  max(klines.high[i-3:i])  # 前3日最高价
         if klines.close[i] > pre3HH and klines.close[i]>klines.open[i] and klines.close[i] > ma5[i]*1.015 and klines.close[i] > ma10[i]*1.015:
             #logger.info("ma5: %f, ma10: %f, df.close: %f, pre3HH:%f" % (ma5[i], ma10[i], df.close[i], pre3HH))
+            # 解决bug：一波多后的未破位宽幅震荡；参控下地狱之：苹果2020.3.18，19
+            if k_highest > 0 and klines.close[i] <= k_highest:
+                continue
             m = i
             k_high = klines.close[i]
+            k_highest = klines.high[i]
     
 
     # STEP2：判断最近4~8日偏多调整，另外趋多日必定收在5日线上，用以确定步步高信号

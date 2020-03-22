@@ -67,7 +67,7 @@ def parse_klines_sg(quote, klines, logger):
         #未止跌 + 倒数第二根和第一根是承压5日线小阳线 + 最后一根最高价要接近5日线
         if klines.close[-3] < klines.low[-4] \
             and klines.close[-1] < ma5[19] and  klines.close[-2] < ma5[18] \
-            and klines.high[-1] >  ma5[5]*0.99:
+            and klines.high[-1] >  ma5[19]*0.99:
             return True
     return False
 

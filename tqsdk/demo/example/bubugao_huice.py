@@ -37,7 +37,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures/logs/'
+log_path = 'E://proj-futures/logs_debug/'
 log_name = log_path + tradingDay + '.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')

@@ -44,7 +44,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures/logs/'
+log_path = 'E://proj-futures/logs_debug/'
 log_name = log_path + tradingDay + '.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')
@@ -120,9 +120,9 @@ while True:
         #logger.info("xiadiyu date: %s, adjust interval: %d" %(trading_date, 20 - index - 1))
         # TODO：判定趋空日的品质
         if index == 11 or index == 12 or index == 14: #8,7,5日偏空调整
-            logger.info("GOOD XIADIYU date: %s, for %s, adjust interval: %d" %(trading_date, SYMBOL, 20 - index - 1))
+            logger.info("MYSTRATEGY - GOOD XIADIYU date: %s, for %s, adjust interval: %d" %(trading_date, SYMBOL, 20 - index - 1))
         elif index == 13 or index == 15: # 6,4日调整
-            logger.info("NORMAL XIADIYU date: %s, for %s, adjust interval: %d" %(trading_date, SYMBOL, 20 - index - 1))
+            logger.info("MYSTRATEGY - NORMAL XIADIYU date: %s, for %s, adjust interval: %d" %(trading_date, SYMBOL, 20 - index - 1))
         else:
             continue
             #logger.info("NOTHING for: %s"%SYMBOL)

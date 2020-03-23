@@ -27,11 +27,15 @@
 /d/Anaconda3/python shuanggui.py --SYMBOL SHFE.ru2005
 
 #1.3 佛回头：主空偏空品种充分反弹滞涨后转空信号，当前没有处于弱势反弹高位的偏空品种
+#3.24 铁矿转空中，后续可考虑逼阴，现在优先考虑佛回头
+/d/Anaconda3/python fohuitou.py --SYMBOL DCE.i2005
 
 #1.4 夸父逼阴：主空品种刚破位后的追空
 # 大多已完成2波及以上空
 # *沪镍 - 刚破新低，可考虑，但逼阴信号日已过，现在该遵循双鬼做空它
 #/d/Anaconda3/python ../biyin.py --SYMBOL SHCE.ni2006
+#3.24 铁矿转空中，后续可考虑逼阴，现在优先考虑佛回头
+/d/Anaconda3/python ../biyin.py --SYMBOL DCE.i2005 --ZC1 606 --ZC2 570
 
 #2.1 步步高：无，偏多震荡品种可以考虑做第二波多
 #2.2 夸父追阳：无

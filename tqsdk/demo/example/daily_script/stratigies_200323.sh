@@ -35,7 +35,7 @@
 # *沪镍 - 刚破新低，可考虑，但逼阴信号日已过，现在该遵循双鬼做空它
 #/d/Anaconda3/python ../biyin.py --SYMBOL SHCE.ni2006
 #3.24 铁矿转空中，后续可考虑逼阴，现在优先考虑佛回头
-/d/Anaconda3/python ../biyin.py --SYMBOL DCE.i2005 --ZC1 606 --ZC2 570
+/d/Anaconda3/python biyin.py --SYMBOL DCE.i2005 --ZC1 606 --ZC2 570
 
 #2.1 步步高：无，偏多震荡品种可以考虑做第二波多
 #2.2 夸父追阳：无

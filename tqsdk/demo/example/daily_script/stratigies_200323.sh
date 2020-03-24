@@ -10,7 +10,8 @@
 # 棉花 - 第二波主空中，暂时不关注
 # 沪镍 - 第一波空中，暂时不关注
 # 橡胶 - 第二波空中，暂时不关注
-/d/Anaconda3/python xiadiyu.py --SYMBOL DCE.p2005
+#3.25 棕榈趋势选择日已突破10日线
+#/d/Anaconda3/python xiadiyu.py --SYMBOL DCE.p2005
 /d/Anaconda3/python xiadiyu.py --SYMBOL CZCE.AP005
 /d/Anaconda3/python xiadiyu.py --SYMBOL DCE.jd2005
 

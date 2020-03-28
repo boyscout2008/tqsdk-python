@@ -25,7 +25,7 @@ def dual_bo_duo(quote, klines, logger):
     #STEP1： 明确当前一波收新高多中 --- 收阳收新高
     if klines.close[-1] > max(klines.high[-9:-1]) and klines.close[-1] > klines.open[-1]:
         #STEP2：找出这波多之前是否存在另一波多 --- 至少前1(主多)+4（调整）站稳在10日之上 + 5日线高于10日线 + 之前有背离5日线的阳线
-        if (klines.close[14:20] > ma10[14:20]).all() and (ma10[14:20] < ma5[14:20]).all() and (klines.close[0:15] > ma5[0:15]*1.02).any():
+        if (klines.close[14:20] > ma10[14:20]).all() and (ma10[16:20] < ma5[16:20]).all() and (klines.close[0:15] > ma5[0:15]*1.02).any():
             return True
 
     return False

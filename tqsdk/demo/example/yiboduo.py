@@ -60,7 +60,7 @@ else:
     SYMBOL = "DCE.i2005"
 
 #STEP2：log
-logger.info("Starting liangboduo strategy for: %s"%SYMBOL)
+logger.info("Starting yiboduo strategy for: %s"%SYMBOL)
 api = TqApi(TqSim())
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)    
 #ticks = api.get_tick_serial(SYMBOL)

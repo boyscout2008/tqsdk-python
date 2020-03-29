@@ -8,3 +8,4 @@
 /d/Anaconda3/python bubugao.py --SYMBOL DCE.i2005
 
 /d/Anaconda3/python dualbo.py --SYMBOL DCE.i2005
+/d/Anaconda3/python yiboduo.py --SYMBOL DCE.i2005

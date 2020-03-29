@@ -8,6 +8,7 @@
 /d/Anaconda3/python fohuitou_huice.py --SYMBOL DCE.i2001 --YEAR 2020
 /d/Anaconda3/python bubugao_huice.py --SYMBOL DCE.i1909 --YEAR 2019
 /d/Anaconda3/python dualbo_huice.py --SYMBOL DCE.i2001 --YEAR 2020
+/d/Anaconda3/python yiboduo_huice.py --SYMBOL DCE.i2005 --YEAR 2020
 
 :<<!
 2020-03-28 22:12:13,177 - xiadiyu_huice.py[line:97] - INFO: Starting xiadiyu strategy for: DCE.i1909, actually year: 2019

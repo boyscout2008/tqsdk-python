@@ -36,9 +36,9 @@ def yi_bo_duo(quote, klines, logger):
     ma10 =  talib.MA(df.close, timeperiod=10)
 
     #STEP1：当日背离中大阳或背离小阳 + 5日线高于10日线
-    if klines.close[-1] > klines.open[-1] and ma5[20] > ma10[10] \
-        and klines.close[-1] > ma5[20]*1.025:
+    if klines.close[-1] > klines.open[-1] and ma5[19] > ma10[19] \
+        and klines.close[-1] > ma5[19]*1.025:
         #STEP2：近4日还有背离中大阳
-        if (klines.close[15:18] > ma5[15:18]*1.02).any():
+        if (klines.close[15:17] > ma5[15:17]*1.02).any():
             return True
     return False

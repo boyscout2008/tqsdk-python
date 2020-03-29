@@ -3,17 +3,14 @@
 __author__ = 'Golden'
 
 '''
-趋势型短线交易信号 - 震荡两波多后的大空
-1. 优选中长线偏空品种，两波多空间基本到位，向下也有空间
-2. 算法等同于步步高，两者区别在于每日更新策略输入品种时做删选，同时甄别是第二波多
+趋势型短线交易信号 - 一波两浪多之后的空机会
+1. 优选中长线偏空品种，短线主空的反弹品种
 
 算法逻辑：
-STEP1：收新高阳线
-STEP2: 至少前4+1走稳在10日之上 + 至少5天有另一波多背离5日线2%以上
+STEP1：当日收背离阳线
+STEP2: 前面5日内还有背离k线
 
 回测小结：
-1. 需要实现判断当前中长线趋势还是偏空，或者两波多空间到位，向下也就有空间了；
-2. 规避准主多品种风险
 '''
 
 import time, datetime, sys, os.path
@@ -62,7 +59,6 @@ if args.SYMBOL != None:
 else:
     SYMBOL = "DCE.i2005"
 
-
 #STEP2：log
 logger.info("Starting liangboduo strategy for: %s"%SYMBOL)
 api = TqApi(TqSim())
@@ -85,9 +81,9 @@ while True:
 
         #STEP3-策略型机会判定
         #logger.info("DEBUG: high is %s, close is %fLIANGBODUO"%(klines[-1]["high"], klines[-1]["close"]))
-        is_dualboduo = stgy4zd.dual_bo_duo(quote, klines, logger)
-        if is_dualboduo:
-            logger.info("MYSTRATEGY - LIANGBODUO date: %s, for %s" %(trading_date, SYMBOL))
+        is_yiboduo = stgy4zd.yi_bo_duo(quote, klines, logger)
+        if is_yiboduo:
+            logger.info("MYSTRATEGY - YIBODUO date: %s, for %s" %(trading_date, SYMBOL))
         #实盘只要收盘后跑一次即可确定
         break
 

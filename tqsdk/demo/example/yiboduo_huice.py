@@ -2,18 +2,16 @@
 #  -*- coding: utf-8 -*-
 __author__ = 'Golden'
 
+
 '''
-趋势型短线交易信号 - 震荡两波多后的大空
-1. 优选中长线偏空品种，两波多空间基本到位，向下也有空间
-2. 算法等同于步步高，两者区别在于每日更新策略输入品种时做删选，同时甄别是第二波多
+趋势型短线交易信号 - 一波两浪多之后的空机会
+1. 优选中长线偏空品种，短线主空的反弹品种
 
 算法逻辑：
-STEP1：收新高阳线
-STEP2: 至少前4+1走稳在10日之上 + 至少5天有另一波多背离5日线2%以上
+STEP1：当日收背离阳线
+STEP2: 前面5日内还有背离k线
 
 回测小结：
-1. 需要实现判断当前中长线趋势还是偏空，或者两波多空间到位，向下也就有空间了；
-2. 规避准主多品种风险
 '''
 
 import time, datetime, sys, os.path
@@ -35,7 +33,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures/logs/'
+log_path = 'E://proj-futures/logs_debug/'
 log_name = log_path + tradingDay + '.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')
@@ -50,22 +48,40 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-#STEP1:交易信号汇总
+#STEP1：交易信号汇总
 trading_date = ''
+pre_trading_date = ''
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
+parser.add_argument('--YEAR')
 args = parser.parse_args()
 
 if args.SYMBOL != None:
     SYMBOL = args.SYMBOL
 else:
-    SYMBOL = "DCE.i2005"
+    SYMBOL = "DCE.i2005" # fake contract
 
+if args.YEAR != None:
+    YEAR = int(args.YEAR)
+else:
+    YEAR = 2020 #TODO：取当年值
 
-#STEP2：log
-logger.info("Starting liangboduo strategy for: %s"%SYMBOL)
-api = TqApi(TqSim())
+#parse and decide time duration for backtesting
+#有些主力合约不分年份，分析月份后2015年开始逐年回测
+if SYMBOL.endswith('01'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 7, 20), end_dt=date(YEAR-1, 12, 15)))
+elif SYMBOL.endswith('05'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR, 4, 15)))
+elif SYMBOL.endswith('09'):
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR, 3, 20), end_dt=date(YEAR, 8, 15)))
+else:
+    logger.info("Not supported contract: %s"%SYMBOL)
+    exit(1)
+
+#STEP2：策略执行log
+logger.info("Starting yiboduo strategy for: %s, actually year: %s"%(SYMBOL, YEAR))
+
 klines = api.get_kline_serial(SYMBOL, duration_seconds=60*60*24, data_length=20)    
 #ticks = api.get_tick_serial(SYMBOL)
 quote = api.get_quote(SYMBOL)
@@ -82,14 +98,16 @@ while True:
 
         #logger.info("DATE: %s, close: %f"%(get_market_day(klines[-1]["datetime"]), klines[-1]["close"]))
         trading_date = bases.get_market_day(klines[-1]["datetime"])
+        if trading_date != pre_trading_date: #忽略k线数据开盘事件
+            pre_trading_date = trading_date
+            continue
 
-        #STEP3-策略型机会判定
-        #logger.info("DEBUG: high is %s, close is %fLIANGBODUO"%(klines[-1]["high"], klines[-1]["close"]))
-        is_dualboduo = stgy4zd.dual_bo_duo(quote, klines, logger)
-        if is_dualboduo:
-            logger.info("MYSTRATEGY - LIANGBODUO date: %s, for %s" %(trading_date, SYMBOL))
-        #实盘只要收盘后跑一次即可确定
-        break
+                #logger.info("DEBUG: high is %s, close is %fLIANGBODUO"%(klines[-1]["high"], klines[-1]["close"]))
+        is_yiboduo = stgy4zd.yi_bo_duo(quote, klines, logger)
+        if is_yiboduo:
+            logger.info("MYSTRATEGY - YIBODUO date: %s, for %s" %(trading_date, SYMBOL))
+        else:
+            continue
 
 api.close()
 logger.removeHandler(fh)

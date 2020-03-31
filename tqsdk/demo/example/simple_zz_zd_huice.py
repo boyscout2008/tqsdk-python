@@ -71,8 +71,8 @@ else:
 if SYMBOL.endswith('01'):
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 7, 20), end_dt=date(YEAR-1, 12, 15)))
 elif SYMBOL.endswith('05'):
-    #api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR, 4, 15)))
-    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 12, 1), end_dt=date(YEAR, 3, 30)))
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR-1, 12, 1)))
+    #api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 12, 1), end_dt=date(YEAR, 3, 30)))
 elif SYMBOL.endswith('09'):
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR, 3, 20), end_dt=date(YEAR, 8, 15)))
 else:
@@ -88,36 +88,11 @@ target_pos = TargetPosTask(api, SYMBOL)
 position = api.get_position(SYMBOL)  # 持仓信息
 quote = api.get_quote(SYMBOL)
 
-#df = klines.to_dataframe()
-# 添加辅助列: time及date, 分别为K线时间的时:分:秒和其所属的交易日
-#print("#### %s" % klines[-1]["close"])
-#df["time"] = df.datetime.apply(lambda x: bases.get_kline_time(x))
-#df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))
-
-#cur_trading_date = df["date"][-1]
-
-# 获取在预设交易时间段内的所有K线, 即时间位于 time_slot_start 到 time_slot_end 之间的数据
-#if time_slot_end > time_slot_start:  # 判断是否类似 23:00:00 开始， 01:00:00 结束这样跨天的情况
-#    klines = klines[(klines["time"] >= time_slot_start) & (klines["time"] <= time_slot_end)]
-#else:
-#    klines = klines[(klines["time"] >= time_slot_start) | (klines["time"] <= time_slot_end)]
-
-#klines = klines[klines["date"] == cur_trading_date]
-#klines["vwap"] = klines.apply(lambda x: x["close"]*x["volume"]/len(x))
-#相同的数组，返回的时间索引应该是最早的那个吧？？？
-#close_low_time, close_low = min(enumerate(klines), key=operator.itemgetter(1))
-#close_high_time, close_high = max(enumerate(klines), key=operator.itemgetter(1))
-
-
-
-# 交易
 
 current_volume = 0  # 记录持仓量
 cur_trading_date = ''
 day_open = 0.0
-total_volume = 0.0
-total_value = 0.0
-vwap_list = []
+
 long_price = 0.0
 short_price = 0.0
 sum_profit = 0.0
@@ -132,10 +107,6 @@ while True:
         if trading_date != cur_trading_date:
             cur_trading_date = trading_date
             day_open = klines[-1]["open"]
-            total_volume = 0.0
-            total_value = 0.0
-            vwap_list.clear()
-            #print("####: %s"%df["date"])
 
         df["time"] = df.datetime.apply(lambda x: bases.get_kline_time(x))
         df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))  
@@ -143,25 +114,8 @@ while True:
 
         df = df.assign(vwap = ((df["volume"]*df["close"]).cumsum() / df["volume"].cumsum()).ffill())
 
-        #volume = df.groupby(['time'])['volume'].sum()
-
-        #klines = df.series()
-
-        #df = klines.to_dataframe()
-        #print("####: %d, %f, %f"%(klines.close[0], klines.close[0], day_open))
-        #df["time"] = df.datetime.apply(lambda x: bases.get_kline_time(x))
-        #df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))
-        #total_volume += df.volume.iloc[-1]
-        #total_value += df.volume.iloc[-1]*df.close.iloc[-1]
-
-        #vwap_list.append(total_value/total_volume)
-
-        #df["vwap"].iloc[-1] = total_value/total_volume
-
-        #print("####: %f, %f"%(df["vwap"].iloc[-1], klines.close[-1]))
         close_low_index, close_low = min(enumerate(df["close"]), key=operator.itemgetter(1))
         close_high_index, close_high = max(enumerate(df["close"]), key=operator.itemgetter(1))
-        #print("####: %d, %f"%(close_low_index, close_low))
         if len(df) < 35:
             continue
 

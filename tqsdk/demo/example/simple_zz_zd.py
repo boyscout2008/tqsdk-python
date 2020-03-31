@@ -11,15 +11,45 @@ __author__ = 'Golden'
 回测小结：
 '''
 
-import datetime
-from tqsdk import TqApi, TargetPosTask
+import datetime, time, sys, os.path
+import logging
+from datetime import date
+from tqsdk import TqApi, TqSim, TargetPosTask
+import operator
 import bases
+import argparse
+import talib
 
 TIME_CELL = 60  # 等时长下单的时间单元, 单位: 秒
 TARGET_VOLUME = 5  # 目标交易手数 (>0: 多头, <0: 空头)
 
 #START_HOUR, START_MINUTE = 21, 0  # 计划交易时段起始时间点
 #END_HOUR, END_MINUTE = 15, 0  # 计划交易时段终点时间点
+
+rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+curDay = time.strftime('%Y%m%d', time.localtime(time.time()))
+curHour = time.strftime('%H', time.localtime(time.time()))
+curDate = datetime.datetime.now().weekday()
+runningDate = curDay
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# 第二步，创建日志文件和控制台两个handler
+log_path = 'E://proj-futures/logs/'
+log_name = log_path + runningDate + '.log'
+logfile = log_name
+fh = logging.FileHandler(logfile, mode='a+')
+fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)  # 输出到console的log等级的开关
+# 第三步，定义handler的输出格式
+formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# 第四步，将logger添加到handler里面
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
@@ -30,66 +60,90 @@ if args.SYMBOL != None:
 else:
     SYMBOL = "DCE.i2005"
 
-
-api = TqApi()
-print("start beili_zz_zd daily strategy!")
+api = TqApi(TqSim())
 
 #time_slot_start = datetime.time(START_HOUR, START_MINUTE)  # 计划交易时段起始时间点
 #time_slot_end = datetime.time(END_HOUR, END_MINUTE)  # 计划交易时段终点时间点
 klines = api.get_kline_serial(SYMBOL, TIME_CELL, data_length=int(10 * 60 * 60 / TIME_CELL))
 target_pos = TargetPosTask(api, SYMBOL)
 position = api.get_position(SYMBOL)  # 持仓信息
+quote = api.get_quote(SYMBOL)
 
-
-# 添加辅助列: time及date, 分别为K线时间的时:分:秒和其所属的交易日
-klines["time"] = klines.datetime.apply(lambda x: bases.get_kline_time(x))
-klines["date"] = klines.datetime.apply(lambda x: bases.get_market_day(x))
-cur_trading_date = klines["date"][-1]
-
-# 获取在预设交易时间段内的所有K线, 即时间位于 time_slot_start 到 time_slot_end 之间的数据
-#if time_slot_end > time_slot_start:  # 判断是否类似 23:00:00 开始， 01:00:00 结束这样跨天的情况
-#    klines = klines[(klines["time"] >= time_slot_start) & (klines["time"] <= time_slot_end)]
-#else:
-#    klines = klines[(klines["time"] >= time_slot_start) | (klines["time"] <= time_slot_end)]
-
-klines = klines[klines["date"] == cur_trading_date]
-klines["vwap"] = klines.apply(lambda x: x["close"]*x["volume"]/len(x))
-#相同的数组，返回的时间索引应该是最早的那个吧？？？
-close_low_time, close_low = min(enumerate(klines), key=operator.itemgetter(1))
-close_high_time, close_high = max(enumerate(klines), key=operator.itemgetter(1))
-
-
-
-# 交易
+logger.info("start beili_zz_zd daily strategy for %s!"%(SYMBOL))
 
 current_volume = 0  # 记录持仓量
+cur_trading_date = ''
+day_open = 0.0
+
+long_price = 0.0
+short_price = 0.0
+sum_profit = 0.0
+
 while True:
     api.wait_update()
     # 新产生一根K线计算分时均价，判断滞涨止跌信号
-
-    if api.is_changing(klines.iloc[-1], "datetime"):
+    if api.is_changing(klines[-1], "datetime"):
+        df = klines.to_dataframe()
+        
         trading_date = bases.get_market_day(klines[-1]["datetime"])
         if trading_date != cur_trading_date:
             cur_trading_date = trading_date
-            klines = klines[klines["date"] == cur_trading_date]
+            day_open = klines[-1]["open"]
 
-        klines["time"] = klines.datetime.apply(lambda x: bases.get_kline_time(x))
-        klines["date"] = klines.datetime.apply(lambda x: bases.get_market_day(x))           
-        klines["vwap"] = klines.apply(lambda x: x["close"]*x["volume"]/len(x))
-        close_low_time, close_low = min(enumerate(klines), key=operator.itemgetter(1))
-        close_high_time, close_high = max(enumerate(klines), key=operator.itemgetter(1))
-        
-        if len(klines) < 35:
+        df["time"] = df.datetime.apply(lambda x: bases.get_kline_time(x))
+        df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))  
+        df = df[(df["date"] == cur_trading_date)]
+
+        df = df.assign(vwap = ((df["volume"]*df["close"]).cumsum() / df["volume"].cumsum()).ffill())
+
+        close_low_index, close_low = min(enumerate(df["close"]), key=operator.itemgetter(1))
+        close_high_index, close_high = max(enumerate(df["close"]), key=operator.itemgetter(1))
+        if len(df) < 35:
             continue
 
-        #判断是否滞涨：最高点至今已有30mins + 最近30分钟收盘都高于且背离分时
-        klines_zz = klines[klines["time"] >= close_high_time]
-        if klines["time"] - close_high_time >= 30 and (klines_zz["close"]>klines["vwap"]).all() \
-            and close_high > klines[klines["time"] == cur_trading_date]["close"] *1.01:
-            print("多背离滞涨，开空: %d" % TARGET_VOLUME)
-            current_volume = -1*TARGET_VOLUME；
-            target_pos.set_target_volume(current_volume)
+        now = datetime.datetime.strptime(quote["datetime"], "%Y-%m-%d %H:%M:%S.%f")  # 当前quote的时间
+        curTime = now
+        curHour = now.hour
+        curMinute = now.minute
+        #分时之上平多单
+        if current_volume > 0 and df_zz["close"].iloc[-1] > df_zz["vwap"].iloc[-1] *1.004:
+            current_volume = 0
+            target_pos.set_target_volume(0) 
+            sum_profit += df_zz["close"].iloc[-1] - long_price
+            logger.info("pinduodan at price: %f, total profit: %f" % (df_zz["close"].iloc[-1], sum_profit))    
+        # 分时之下平空单
+        elif current_volume < 0 and df_zz["close"].iloc[-1] < df_zz["vwap"].iloc[-1] *0.996:
+            current_volume = 0
+            target_pos.set_target_volume(0)
+            sum_profit += short_price - df_zz["close"].iloc[-1]
+            logger.info("pingkongdan at price: %f, total profit: %f" % (df_zz["close"].iloc[-1], sum_profit))
+        else: # 判断多背离滞涨空背离止跌： 30min + 全背离
+            if current_volume != 0 and int(curHour)==14 and int(curMinute)>40:# 14:40之后强制平仓
+                if current_volume > 0:
+                    sum_profit += df_zz["close"].iloc[-1] - long_price
+                else:
+                    sum_profit += short_price - df_zz["close"].iloc[-1]
+                current_volume = 0
+                target_pos.set_target_volume(0)
+                logger.info("qiangzhipingcang at price: %f, total profit: %f" % (df_zz["close"].iloc[-1], sum_profit))
 
-        #判断是否止跌：最低点至今已有30mins + 最近30分钟收盘都低于且背离分时
+            if int(curHour) == 14 and int(curMinute) > 10 : # 14:10之后不开仓
+                continue
+
+            df_zz = df[close_high_index:len(df)]
+            df_zd = df[close_low_index:len(df)]
+            if current_volume == 0 and len(df) - close_high_index >= 30 and (df_zz["close"]>df_zz["vwap"]).all() \
+                and close_high > df_zz["vwap"].iloc[0] *1.01:
+                logger.info("duobeili, short with price: %f at %s" % (df_zz["close"].iloc[-1], now))
+                short_price = df_zz["close"].iloc[-1]
+                current_volume = -1*TARGET_VOLUME
+                target_pos.set_target_volume(current_volume)
+            elif current_volume == 0 and len(df) - close_low_index >= 30 and (df_zd["close"]<df_zd["vwap"]).all() \
+                and close_low < df_zd["vwap"].iloc[0] *0.996:
+                logger.info("kongbeili, long with price: %f at %s" % (df_zz["close"].iloc[-1], now))
+                long_price = df_zz["close"].iloc[-1]
+                current_volume = TARGET_VOLUME
+                target_pos.set_target_volume(current_volume)
 
 api.close()
+logger.removeHandler(fh)

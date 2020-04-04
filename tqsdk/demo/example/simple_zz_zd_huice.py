@@ -5,6 +5,10 @@ __author__ = 'Golden'
 '''
 日内交易信号 - 多背离滞涨开空，空背离止跌开多
 1. 第一个日内交易策略，建立实盘和回测代码框架
+2. 优化：
+2.1（0 0+ 1） （0，0+ 1） 0- 的品种先空止跌做多
+2.2（0 0- -1） （0 0- -1） （0+ 0）的品种先多滞涨做空
+
 
 算法逻辑：
 
@@ -37,7 +41,7 @@ logger.setLevel(logging.INFO)
 
 # 第二步，创建日志文件和控制台两个handler
 log_path = 'E://proj-futures/logs_debug/'
-log_name = log_path + runningDate + '.log'
+log_name = log_path + runningDate + '_daily.log'
 logfile = log_name
 fh = logging.FileHandler(logfile, mode='a+')
 fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
@@ -71,8 +75,8 @@ else:
 if SYMBOL.endswith('01'):
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 7, 20), end_dt=date(YEAR-1, 12, 15)))
 elif SYMBOL.endswith('05'):
-    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR-1, 12, 1)))
-    #api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 12, 1), end_dt=date(YEAR, 3, 30)))
+    #api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR-1, 12, 1)))
+    api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 12, 1), end_dt=date(YEAR, 3, 30)))
 elif SYMBOL.endswith('09'):
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR, 3, 20), end_dt=date(YEAR, 8, 15)))
 else:
@@ -152,13 +156,13 @@ while True:
             df_zd = df[close_low_index:len(df)]
             if current_volume == 0 and len(df) - close_high_index >= 30 and (df_zz["close"]>df_zz["vwap"]).all() \
                 and close_high > df_zz["vwap"].iloc[0] *1.01:
-                logger.info("duobeili, short with price: %f at %s" % (df_zz["close"].iloc[-1], now))
+                logger.info("DUOBEILI, short with price: %f at %s" % (df_zz["close"].iloc[-1], now))
                 short_price = df_zz["close"].iloc[-1]
                 current_volume = -1*TARGET_VOLUME
                 target_pos.set_target_volume(current_volume)
             elif current_volume == 0 and len(df) - close_low_index >= 30 and (df_zd["close"]<df_zd["vwap"]).all() \
                 and close_low < df_zd["vwap"].iloc[0] *0.996:
-                logger.info("kongbeili, long with price: %f at %s" % (df_zz["close"].iloc[-1], now))
+                logger.info("KONGBEILI, long with price: %f at %s" % (df_zz["close"].iloc[-1], now))
                 long_price = df_zz["close"].iloc[-1]
                 current_volume = TARGET_VOLUME
                 target_pos.set_target_volume(current_volume)

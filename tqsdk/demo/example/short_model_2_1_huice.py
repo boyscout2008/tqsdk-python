@@ -201,14 +201,5 @@ while True:
             last_kong_index = len(df)
             logger.info("XIANGAO_SHORT with price: %f at %s" % (df["close"].iloc[-1], now))
 
-        # 空背离止跌全部止盈
-        if  len(df) - last_kong_index > 20 and df["close"].iloc[-1] > df["vwap"].iloc[-1] *1.002 \
-            and df["close"].iloc[-1] > LAST_SETTLEMENT*1.003:
-            current_volume += -1*TARGET_VOLUME
-            traded_volume += TARGET_VOLUME
-            target_pos.set_target_volume(current_volume)
-            last_kong_index = len(df)
-            logger.info("PANZHONGGAO_SHORT with price: %f at %s" %(df["close"].iloc[-1], now))
-
 api.close()
 logger.removeHandler(fh)

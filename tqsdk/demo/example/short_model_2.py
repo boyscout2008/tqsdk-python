@@ -3,7 +3,7 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号 - 偏空震荡趋势承压做空模型2 （0-|1- 0- 0-）
+日内交易信号 - 偏空震荡，主空趋势承压10日线做空模型2 （0-|1- 0- 0-）
 1. 当前偏空震荡（连续承压10日线） + 日内中大阳反弹（双鬼拍门或一大阳承压）+ 明确阻力位 + 次日开盘高偏离结算价且继续承压10日线
 2. 几种形态：2020.4.2这种收盘大背离结算价的；或者未大背离结算价
 2.1 大背离结算价的模型较为简单，不需要择机高空了，开盘即可空，主要关注止盈和再开空 --- KAIPANGAO_SHORT
@@ -118,13 +118,13 @@ while True:
             #logger.info("###%s, %s",trading_date, cur_trading_date)
             cur_trading_date = trading_date
             # workaround: ignore the first signal for kline with last day's close
-            df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x)) 
+            df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))
             df = df[(df["date"] == cur_trading_date)]
             if len(df) > 1:
                 continue
 
         df["time"] = df.datetime.apply(lambda x: bases.get_kline_time(x))
-        df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))  
+        df["date"] = df.datetime.apply(lambda x: bases.get_market_day(x))
         df = df[(df["date"] == cur_trading_date)]
 
         #基于分钟k线计算的vwap有误差，应该基于秒级计算，实盘修正它？？？还是忽略这点误差？？？

@@ -3,7 +3,7 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号 - 偏空震荡趋势承压做空模型2_1 （0-|1- 0- 0-）
+日内交易信号 - 偏空震荡，主空趋势承压10日线做空模型2_1 （0-|1- 0- 0-）
 1. 它是模型2的延续，在模型2主空破5日线，但未中大背离之前且距离支撑有空间的情况下的中大空趋势
 2  它也有两种形态：先相对高滞涨后转中大空，或者震荡做空 --- PANZHONGGAO_SHORT
 
@@ -180,16 +180,6 @@ while True:
             target_pos.set_target_volume(current_volume)
             last_kong_index = len(df)
             logger.info("XIANGAO_SHORT with price: %f at %s" % (df["close"].iloc[-1], now))
-
-        # 空背离止跌全部止盈
-        if  len(df) - last_kong_index > 20 and df["close"].iloc[-1] > df["vwap"].iloc[-1] *1.002 \
-            and df["close"].iloc[-1] > LAST_SETTLEMENT*1.003:
-            current_volume += -1*TARGET_VOLUME
-            traded_volume += TARGET_VOLUME
-            target_pos.set_target_volume(current_volume)
-            last_kong_index = len(df)
-            logger.info("PANZHONGGAO_SHORT with price: %f at %s" %(df["close"].iloc[-1], now))
-
 
 api.close()
 logger.removeHandler(fh)

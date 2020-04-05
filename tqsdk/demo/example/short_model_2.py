@@ -41,22 +41,6 @@ runningDate = curDay
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# 第二步，创建日志文件和控制台两个handler
-log_path = 'E://proj-futures/logs/'
-log_name = log_path + runningDate + '_daily.log'
-logfile = log_name
-fh = logging.FileHandler(logfile, mode='a+')
-fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)  # 输出到console的log等级的开关
-# 第三步，定义handler的输出格式
-formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
-# 第四步，将logger添加到handler里面
-logger.addHandler(fh)
-logger.addHandler(ch)
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
 parser.add_argument('--YALIWEI')
@@ -84,6 +68,25 @@ if args.LAST_SETTLEMENT != None:
     LAST_SETTLEMENT = float(args.LAST_SETTLEMENT)
 else:
     exit(-1)
+
+a = __file__
+c = os.path.basename(a) #获取文件名称
+
+# 第二步，创建日志文件和控制台两个handler
+log_path = 'E://proj-futures/logs/'
+log_name = log_path + runningDate + '-' + SYMBOL + '-' + c + '.log'
+logfile = log_name
+fh = logging.FileHandler(logfile, mode='a+')
+fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)  # 输出到console的log等级的开关
+# 第三步，定义handler的输出格式
+formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# 第四步，将logger添加到handler里面
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 api = TqApi(TqSim())
 

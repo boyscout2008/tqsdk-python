@@ -38,6 +38,7 @@ parser.add_argument('--SYMBOL')
 parser.add_argument('--FANGXIANG') # SELL | BUY
 parser.add_argument('--LIMITPRICE')
 parser.add_argument('--VOLUME')
+parser.add_argument('--LEVEL') # default level 1 for zhuizhangshadie, level 2 add new fk strategy, and so on
 
 args = parser.parse_args()
 
@@ -60,6 +61,11 @@ if args.VOLUME != None:
     VOLUME = float(args.VOLUME)
 else:
     exit(-1)
+
+if args.LEVEL != None:
+    LEVEL = int(args.LEVEL)
+else:
+    LEVEL = 1
 
 a = __file__
 c = os.path.basename(a) #获取文件名称
@@ -99,6 +105,8 @@ cur_trading_date = ''
 short_price = 0.0
 sum_profit = 0.0
 last_kong_index = 0
+is_xiankongbeili_and_zhidie = False
+is_xianduobeili_and_zhizhang = False
 
 while True:
     api.wait_update()
@@ -151,16 +159,31 @@ while True:
         df_zd = df[close_low_index:len(df)]
         df_zz = df[close_high_index:len(df)]
 
-        #简单风控：杜绝追涨杀跌
+        #先空背离止跌
+        if len(df) - close_low_index >= 30 and (df_zd["close"]<df_zd["vwap"]).all() and close_low < df["open"]*0.985 \
+            and int(curHour) < 11 and int(curHour) > 15:
+            is_xiankongbeili_and_zhidie = True
+
+        #先多背离滞涨
+        if len(df) - close_high_index >= 30 and (df_zz["close"]<df_zz["vwap"]).all() and close_high > df["open"]*1.015 \
+            and int(curHour) < 11 and int(curHour) > 15:
+            is_xianduobeili_and_zhizhang = True
+
+
+        #简单风控：杜绝追涨杀跌L1 + 先多背离滞涨不做多和先空背离止跌不做空L2
         if FANGXIANG == "SELL":
-            if LIMITPRICE < df["vwap"].iloc[-1]*0.998:
+            if LIMITPRICE < df["vwap"].iloc[-1]*0.998 and LEVEL >= 1:
                 logger.info("INVALID zhuikong order with price: %f at %s! is it ZHUDUO?" % (LIMITPRICE, now))
+            elif is_xiankongbeili_and_zhidie and LEVEL >= 2:
+                logger.info("INVALID order for xiankongbeili_zd with price: %f at %s!" % (LIMITPRICE, now))
             else:
                 api.insert_order(symbol=SYMBOL, direction="SELL", offset="OPEN", limit_price=LIMITPRICE, volume=VOLUME)
                 logger.info("SHORT order with price: %f at %s!" % (LIMITPRICE, now))
         elif FANGXIANG == "BUY":
-            if LIMITPRICE > df["vwap"].iloc[-1]*1.002:
+            if LIMITPRICE > df["vwap"].iloc[-1]*1.002 and LEVEL >= 1:
                 logger.info("INVALID zhuiduo order with price: %f at %s! is it ZHUKONG" % (LIMITPRICE, now))
+            elif is_xianduobeili_and_zhizhang and LEVEL >= 2:
+                logger.info("INVALID order for xianduobeili_zz with price: %f at %s!" % (LIMITPRICE, now))
             else:
                 api.insert_order(symbol=SYMBOL, direction="BUY", offset="OPEN", limit_price=LIMITPRICE, volume=VOLUME)
                 logger.info("LONG order with price: %f at %s!" % (LIMITPRICE, now))

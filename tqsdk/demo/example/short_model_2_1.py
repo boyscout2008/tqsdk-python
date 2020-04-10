@@ -142,7 +142,7 @@ while True:
         curHour = now.hour
         curMinute = now.minute
 
-        #logger.info("CURRENT PRICES:  close = %f, vwap = %f, day_open = %f at %s!" % (df["close"].iloc[-1], df["vwap"].iloc[-1], df["open"].iloc[0], now))
+        logger.info("CURRENT PRICES:  close = %f, vwap = %f, day_open = %f at %s!" % (df["close"].iloc[-1], df["vwap"].iloc[-1], df["open"].iloc[0], now))
 
         df_zd = df[close_low_index:len(df)]
         if len(df) - close_low_index >= 30 and (df_zd["close"]<df_zd["vwap"]*1.003).all() \

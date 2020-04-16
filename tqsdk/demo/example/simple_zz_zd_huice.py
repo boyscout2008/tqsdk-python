@@ -75,7 +75,6 @@ else:
 if SYMBOL.endswith('01'):
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 7, 20), end_dt=date(YEAR-1, 12, 15)))
 elif SYMBOL.endswith('05'):
-    #api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 11, 20), end_dt=date(YEAR-1, 12, 1)))
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR-1, 12, 1), end_dt=date(YEAR, 3, 30)))
 elif SYMBOL.endswith('09'):
     api = TqApi(TqSim(), backtest=TqBacktest(start_dt=date(YEAR, 3, 20), end_dt=date(YEAR, 8, 15)))

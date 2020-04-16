@@ -3,9 +3,7 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号 - 多背离滞涨开空，空背离止跌开多
-1. 实盘和回测代码基本一致，输入参数的不同在拷贝创建新策略时不需要手动更改
-
+日内交易信号 - 多背离滞涨,空背离止跌信号监控
 算法逻辑：
 
 回测小结：
@@ -72,7 +70,7 @@ target_pos = TargetPosTask(api, SYMBOL)
 position = api.get_position(SYMBOL)  # 持仓信息
 quote = api.get_quote(SYMBOL)
 
-logger.info("start beili_zz_zd daily strategy for %s!"%(SYMBOL))
+logger.info("start zz_zd_notify strategy for %s!"%(SYMBOL))
 
 current_volume = 0  # 记录持仓量
 cur_trading_date = ''
@@ -119,59 +117,21 @@ while True:
         logger.info("CURRENT PRICES:  close = %f, vwap = %f, day_open = %f at %s!" % (df["close"].iloc[-1], df["vwap"].iloc[-1], df["open"].iloc[0], now))
 
         # 先多背离信号及对应滞涨信号
-        if int(curHour) < 11 and int(curHour) > 13:# 先多空时间点11：00之前开始空或多背离
+        if not (int(curHour) > 11 and int(curHour) < 15):# 先多空时间点11：00之前开始空或多背离
             df_zz = df[close_high_index:len(df)]
             df_zd = df[close_low_index:len(df)]
-            if len(df) - close_high_index >= 30 and (df_zz["close"]>df_zz["vwap"]).all() \
-                and close_high > df_zz["vwap"].iloc[0] *1.01: #多背离滞涨
-                logger.info("xian DUOBEILI_ZHIZHANG at %s" % (now))
+            if (df_zz["close"]>df_zz["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.01: #多背离滞涨
+                if len(df) - close_high_index == 30:
+                    logger.info("xian DUOBEILI_ZHIZHANG_30mins at %s" % (now))
+                elif len(df) - close_high_index == 17:
+                    logger.info("xian DUOBEILI_ZHIZHANG_17mins at %s, is zhendang_zhizhang???" % (now))
                 
 
-            if len(df) - close_low_index >= 30 and (df_zd["close"]<df_zd["vwap"]).all() \
-                and close_low < df_zd["vwap"].iloc[0] *0.996:
-                logger.info("xian KONGBEILI_ZHIDIE at %s" % (now))
-
-        '''
-        #分时之上平多单
-        if current_volume > 0 and df_zz["close"].iloc[-1] > df_zz["vwap"].iloc[-1] *1.004:
-            current_volume = 0
-            target_pos.set_target_volume(0) 
-            sum_profit += df_zz["close"].iloc[-1] - long_price
-            logger.info("pinduodan at price: %f, total profit: %f" % (df_zz["close"].iloc[-1], sum_profit))    
-        # 分时之下平空单
-        elif current_volume < 0 and df_zz["close"].iloc[-1] < df_zz["vwap"].iloc[-1] *0.996:
-            current_volume = 0
-            target_pos.set_target_volume(0)
-            sum_profit += short_price - df_zz["close"].iloc[-1]
-            logger.info("pingkongdan at price: %f, total profit: %f" % (df_zz["close"].iloc[-1], sum_profit))
-        else: # 判断多背离滞涨空背离止跌： 30min + 全背离
-            if current_volume != 0 and int(curHour)==14 and int(curMinute)>40:# 14:40之后强制平仓
-                if current_volume > 0:
-                    sum_profit += df_zz["close"].iloc[-1] - long_price
-                else:
-                    sum_profit += short_price - df_zz["close"].iloc[-1]
-                current_volume = 0
-                target_pos.set_target_volume(0)
-                logger.info("qiangzhipingcang at price: %f, total profit: %f" % (df_zz["close"].iloc[-1], sum_profit))
-
-            if int(curHour) == 14 and int(curMinute) > 10 : # 14:10之后不开仓
-                continue
-
-            df_zz = df[close_high_index:len(df)]
-            df_zd = df[close_low_index:len(df)]
-            if current_volume == 0 and len(df) - close_high_index >= 30 and (df_zz["close"]>df_zz["vwap"]).all() \
-                and close_high > df_zz["vwap"].iloc[0] *1.01:
-                logger.info("DUOBEILI, short with price: %f at %s" % (df_zz["close"].iloc[-1], now))
-                short_price = df_zz["close"].iloc[-1]
-                current_volume = -1*TARGET_VOLUME
-                target_pos.set_target_volume(current_volume)
-            elif current_volume == 0 and len(df) - close_low_index >= 30 and (df_zd["close"]<df_zd["vwap"]).all() \
-                and close_low < df_zd["vwap"].iloc[0] *0.996:
-                logger.info("KONGBEILI, long with price: %f at %s" % (df_zz["close"].iloc[-1], now))
-                long_price = df_zz["close"].iloc[-1]
-                current_volume = TARGET_VOLUME
-                target_pos.set_target_volume(current_volume)
-        '''
+            if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
+                if len(df) - close_low_index == 30:
+                    logger.info("xian KONGBEILI_ZHIDIE_30mins at %s" % (now))
+                elif len(df) - close_low_index == 17:
+                    logger.info("xian KONGBEILI_ZHIDIE_17mins at %s, is zhendang_zhidie???" % (now))
 
 api.close()
 logger.removeHandler(fh)

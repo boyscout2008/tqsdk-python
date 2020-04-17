@@ -3,28 +3,22 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号 - 开盘即有日内高位的主空模型
+日内做多交易信号 - 开盘即直接震荡小低或小空触及强支撑位主多模型
 1. 适用于
-   1.1 偏多品种一波多未明确滞涨时的高开或主多拔高滞涨后开空
-   1.2 偏多品种一波蓄势不足的多背离后次日主空
-   1.3 偏空品种趋空日做空（标准佛回头，下地狱等）
+   1.1 主多或偏多品种的多趋势：一波多未大背离和滞涨 + （收阴或主多中） + 接近支撑位 + 次日先小低或小空触及支撑位止跌做多
+   1.2 非偏空震荡品种一波蓄势不足的空背离后，次日先相对低位走稳做多
+2. 这里只捕捉先低做多信号，偏多走稳的追多信号请配合long_model_zhuduo.py使用
 
 信号提醒：
-1. 参与时机和点位： 开盘即可空，这里主要提醒盘中反复的相对高空机会
-2. 止盈：中大空背离止跌局部止盈，或者大背离分时局部止盈；等待反弹承压后再做空
+1. 参与时机和点位： 长期相对低位止跌 + 分时之下小低或小空做多；或者开盘小空触及支撑做多
+2. 止盈：中大多背离滞涨止盈，小多背离局部止盈等待再次多机会
 
 风险控制：
-1. 先空背离止跌日内禁止做空
-2. 不做多，可追空 - 风险较小
+1. 先大多背离滞涨止盈；后续视品种情况而定：偏多品种偏多调整走稳后可再做多
+2. 不做空，谨慎追多
 
 实盘验证：
 '''
-
-#TODOs:
-# 1. 区分三种做空形态，给不同的偏向的品种监控不同的做空信号，避免混淆
-# 2. 抓住一些非强多高开和日内先多假突破多背离后的空机会
-# 3. 策略更完善，有微信通知，程序活动监控和异常重启等功能。
-# 4. 以后每天的操作至少介入时机和点位必须通过量化策略来规范。
 
 import datetime, time, sys, os.path
 import logging
@@ -53,7 +47,7 @@ logger.setLevel(logging.INFO)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--SYMBOL')
-parser.add_argument('--YALIWEI')
+parser.add_argument('--ZHICHENG')
 parser.add_argument('--LAST_CLOSE')
 parser.add_argument('--LAST_SETTLEMENT')
 
@@ -64,8 +58,8 @@ if args.SYMBOL != None:
 else:
     SYMBOL = "DCE.i2009"
 
-if args.YALIWEI != None:
-    YALIWEI = float(args.YALIWEI)
+if args.ZHICHENG != None:
+    ZHICHENG = float(args.ZHICHENG)
 else:
     exit(-1)
 
@@ -120,6 +114,7 @@ signal_interval = 10
 short_price = 0.0
 sum_profit = 0.0
 last_kong_index = 0
+kaipan_di = False
 
 while True:
     api.wait_update()
@@ -157,39 +152,42 @@ while True:
         logger.info("CURRENT PRICES:  close = %f, vwap = %f, day_open = %f at %s!" % (df["close"].iloc[-1], df["vwap"].iloc[-1], df["open"].iloc[0], now))
 
 
-        if not (int(curHour) > 13 and int(curHour) < 15):# 先或中, 不参与14：00之后尾盘行情
+        if not (int(curHour) > 11 and int(curHour) < 15):# 先或中低, 不涉及13：00之后的空转多行情
             df_zz = df[close_high_index:len(df)]
             df_zd = df[close_low_index:len(df)]
 
-            # 形态1.2：震荡做空，高点只在开盘半小时内出现，之后再无新高点 除了开盘直接开空外，策略只负责发现盘中相对高点做空机会
-            # 无先大空 + 接近阻力位 + 高于分时开空
-            if len(df) > 20 and close_low > df["open"].iloc[0]*0.985 and (close_high > YALIWEI*0.992 or close_high > df["open"].iloc[0]):
-                #close_low_index_20min, close_low_20min = min(enumerate(df["close"][20:]), key=operator.itemgetter(1))
-                close_high_index_20min, close_high_20min = max(enumerate(df["close"][20:]), key=operator.itemgetter(1))
-                df_20min_hou_zz = df[close_high_index_20min+20:len(df)]
-                if (df_20min_hou_zz["close"]>df_20min_hou_zz["vwap"]*0.995).all() and close_high_20min >= df_20min_hou_zz["vwap"].iloc[0]:
-                    if len(df) - close_high_index_20min - 20 == 18 and close_high_20min < close_high:
-                        logger.info("ZHUKONG_ZHIZHANG_18MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
-                        winsound.PlaySound('p1.wav', winsound.SND_FILENAME) 
-                    elif len(df) - close_high_index_20min - 20 == 30 and close_high_20min < close_high:
-                        logger.info("ZHUKONG_ZHIZHANG_30MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
-                        winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
+            # 开盘半小时小空小背离触及支撑做多
+            if len(df) <= 30 and close_low < df["open"].iloc[0]*0.992 and close_low < df_zd["vwap"].iloc[0]*0.997 and not kaipan_di:
+                kaipan_di = True
+                logger.info("KAIPAN_XIAOKONG_ZHICHENG_LONG below price: %f at %s, or wait 10mins after zhan shang fenshi" % (close_low, now))
+                    winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
 
+            # 长期低于分时但无新低：则分时之下小低或小空局部止跌做多
+            # 无先多背离 + 接近分时或低于分时止跌开多
+            if len(df) > 30 and (close_high < df["open"].iloc[0]*1.01 and close_high < df_zz["vwap"].iloc[0]*1.01):
+                df_30mins = df[len(df) - 30 :len(df)]
+
+                close_low_index_30mins, close_low_30mins = min(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
+                close_high_index_30mins, close_high_30mins = max(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
+
+                #低点低于开盘价 + 最近半小时小低止跌, 每隔10分钟报一次低多信号
+                if close_low < df["close"].iloc[0]  and (df_30mins['close'] < df_30mins['vwap']*1.002).all() \
+                    and (len(df) - close_low_30mins)%10 == 0:
+                    logger.info("XIAN_XIAODI_ZHIDIE_30MINS_LONG below price: %f at %s" % (df['vwap'].iloc[-1], now))
+                    winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
 
             # 止盈和风控
-            if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
-                #先空,禁止做空
-                if len(df) - close_low_index == 30:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("DA_KONG_ZHIDIE_30mins at %s, ZHIYING, NO MORE SHORT" % (now))
-                    else:
-                        logger.info("XIAO_KONG_ZHIDIE_30mins at %s, ZHIYING and wait next short signal" % (now))
-                    #logger.info("%f, %f" % (YALIWEI, close_high))
+            if (df_zd["close"] > df_zd["vwap"]*1.006).all() and close_high > df_zz["vwap"].iloc[0] *1.015:
+                #先大多高位滞涨,禁止追多
+                if len(df) - close_high_index == 30:
+                     logger.info("DA_DUO_ZHIZHANG_30mins at %s, ZHIYING and wait next good long signal" % (now))
+
                 elif len(df) - close_low_index == 20:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("DA_KONG_ZHIDIE_20mins at %s, ZHIYING, NO MORE SHORT" % (now))
-                    else:
-                        logger.info("XIAO_KONG_ZHIDIE_20mins at %s, ZHIYING and wait next short signal" % (now))
+                    logger.info("DA_DUO_ZHIZHANG_20mins at %s, ZHIYING and wait next good long signal" % (now))
+            elif (df_zd["close"] > df_zd["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.01:
+                #先小多滞涨,局部止盈
+                if len(df) - close_high_index == 30:
+                     logger.info("XIAO_DUO_ZHIZHANG_30mins at %s, JUBU_ZHIYING and wait next long signal" % (now))
 
 
 api.close()

@@ -130,9 +130,11 @@ traded_volume = 0
 k_count = 0
 signal_interval = 10
 
-short_price = 0.0
+# 盈利亏损统计
+short_price_18mins = 0.0
+short_price_30mins = 0.0
 sum_profit = 0.0
-last_kong_index = 0
+
 
 while True:
     api.wait_update()
@@ -182,11 +184,15 @@ while True:
                     traded_volume += TARGET_VOLUME
                     #target_pos.set_target_volume(current_volume)
                     logger.info("XIAN_XIANGDUIGAO_ZHENDANG_ZHIZHANG_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
+                    if short_price_30mins == 0:
+                        short_price_30mins = df["close"].iloc[-1]
                 elif len(df) - close_high_index == 18: # 相对高位震荡 + 局部滞涨
                     current_volume += -1*TARGET_VOLUME
                     traded_volume += TARGET_VOLUME
                     #target_pos.set_target_volume(current_volume)
                     logger.info("XIAN_XIANGDUIGAO_ZHENDANG_18MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
+                    if short_price_18mins == 0:
+                        short_price_18mins = df["close"].iloc[-1]
 
             # 止盈和风控
             if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
@@ -196,11 +202,26 @@ while True:
                         logger.info("DA_KONG_ZHIDIE_30mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
                     else:
                         logger.info("KONGBEILI_ZHIDIE_30mins at %s, JUBU_ZHIYING" % (now))
+                        if short_price_30mins != 0:
+                            sum_profit += short_price_30mins - df["close"].iloc[-1]
+                            short_price_30mins = 0.0
                 elif len(df) - close_low_index == 20:
                     if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
                         logger.info("DA_KONG_ZHIDIE_20mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
                     else:
                         logger.info("KONGBEILI_ZHIDIE_20mins at %s, JUBU_ZHIYING" % (now))
+                        if short_price_18mins != 0:
+                            sum_profit += short_price_18mins - df["close"].iloc[-1]
+                            short_price_18mins = 0.0
+        if int(curHour) == 14 and int(curMinute) == 45:
+            # 强制平仓，并统计利润
+            if short_price_30mins != 0:
+                sum_profit += short_price_30mins - df["close"].iloc[-1]
+                short_price_30mins = 0.0
+            if short_price_18mins != 0:
+                sum_profit += short_price_18mins - df["close"].iloc[-1]
+                short_price_18mins = 0.0
+            logger.info("SHORT profit at %s is %f." % (now, sum_profit))
 
 api.close()
 logger.removeHandler(fh)

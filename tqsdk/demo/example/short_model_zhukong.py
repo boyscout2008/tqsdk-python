@@ -165,16 +165,15 @@ while True:
             # 无先大空 + 接近阻力位 + 高于分时开空
             if len(df) > 20 and close_low > df["open"].iloc[0]*0.985 and (close_high > YALIWEI*0.992 or close_high > df["open"].iloc[0]):
                 #close_low_index_20min, close_low_20min = min(enumerate(df["close"][20:]), key=operator.itemgetter(1))
-                close_high_index_20min, close_high_20min = max(enumerate(df["close"][20:]), key=operator.itemgetter(1))
-                df_20min_hou_zz = df[close_high_index_20min+20:len(df)]
-                if (df_20min_hou_zz["close"]>df_20min_hou_zz["vwap"]*0.995).all() and close_high_20min >= df_20min_hou_zz["vwap"].iloc[0]:
-                    if len(df) - close_high_index_20min - 20 == 18 and close_high_20min < close_high:
+                close_high_index_2, close_high_2 = max(enumerate(df["close"][close_low_index:]), key=operator.itemgetter(1))
+                df_jubu_zz = df[close_high_index_2+close_low_index:len(df)]
+                if (df_jubu_zz["close"]>df_jubu_zz["vwap"]*0.995).all() and close_high_2 > df_jubu_zz["vwap"].iloc[0]*0.998:
+                    if len(df) - close_high_index_2 - close_low_index == 18:
                         logger.info("ZHUKONG_ZHIZHANG_18MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
-                        winsound.PlaySound('p1.wav', winsound.SND_FILENAME) 
-                    elif len(df) - close_high_index_20min - 20 == 30 and close_high_20min < close_high:
+                        winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
+                    elif len(df) - close_high_index_2 - close_low_index == 30:
                         logger.info("ZHUKONG_ZHIZHANG_30MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
                         winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
-
 
             # 止盈和风控
             if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:

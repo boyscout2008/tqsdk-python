@@ -175,11 +175,11 @@ while True:
 
             # 形态1.2：震荡做空，高点只在开盘半小时内出现，之后再无新高点 除了开盘直接开空外，策略只负责发现盘中相对高点做空机会
             # 无先大空 + 接近阻力位 + 高于分时开空
-            if len(df) > 20 and close_low > df["open"].iloc[0]*0.985 and (close_high > YALIWEI*0.992 or close_high > df["open"].iloc[0]):
+            if len(df) > 20 and close_low > df["open"].iloc[0]*0.98 and (close_high > YALIWEI*0.992 or close_high > df["open"].iloc[0]):
                 #close_low_index_20min, close_low_20min = min(enumerate(df["close"][20:]), key=operator.itemgetter(1))
-                close_high_index_2, close_high_2 = max(enumerate(df["close"][close_low_index:]), key=operator.itemgetter(1))
+                close_high_index_2, close_high_2 = max(enumerate(df["close"][close_low_index:len(df)]), key=operator.itemgetter(1))
                 df_jubu_zz = df[close_high_index_2+close_low_index:len(df)]
-                if (df_jubu_zz["close"]>df_jubu_zz["vwap"]*0.995).all() and close_high_2 > df_jubu_zz["vwap"].iloc[0]*0.998:
+                if (df_jubu_zz["close"]>df_jubu_zz["vwap"]*0.996).all() and close_high_2 > df_jubu_zz["vwap"].iloc[0]*0.998:
                     if len(df) - close_high_index_2 - close_low_index == 18:
                         logger.info("ZHUKONG_ZHIZHANG_18MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
                     elif len(df) - close_high_index_2 - close_low_index == 30:

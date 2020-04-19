@@ -185,7 +185,7 @@ while True:
                         logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:
                         logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
-                elif len(df) - close_low_index == 20:
+                elif len(df) - close_high_index == 20:
                     if close_high > df["open"].iloc[0]*1.015 and df_zz["close"] > df_zz["vwap"]).all()*1.008:
                         logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:

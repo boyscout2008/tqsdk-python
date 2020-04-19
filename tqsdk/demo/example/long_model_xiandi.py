@@ -195,7 +195,7 @@ while True:
                 if len(df) - close_high_index == 30:
                      logger.info("DA_DUO_ZHIZHANG_30mins at %s, ZHIYING and wait next good long signal" % (now))
 
-                elif len(df) - close_low_index == 20:
+                elif len(df) - close_high_index == 20:
                     logger.info("DA_DUO_ZHIZHANG_20mins at %s, ZHIYING and wait next good long signal" % (now))
             elif (df_zd["close"] > df_zd["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.01:
                 #先小多滞涨,局部止盈

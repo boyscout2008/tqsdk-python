@@ -131,9 +131,8 @@ traded_volume = 0
 k_count = 0
 signal_interval = 10
 
-short_price = 0.0
+long_price_30mins = 0.0
 sum_profit = 0.0
-last_kong_index = 0
 
 while True:
     api.wait_update()
@@ -187,10 +186,14 @@ while True:
                 if (df_30mins['close'] > df_30mins['vwap']*0.998).all() and (df_30mins['close'] < df_30mins['vwap']*1.02).all() \
                     and len(df) - close_high_index == 40:
                     logger.info("ZHUDUO_PIANDUO_ZOUWEN_30MINS_LONG above price: %f at %s" % (df_30mins['vwap'].iloc[-1], now))
+                    if long_price_30mins == 0:
+                        long_price_30mins = df["close"].iloc[-1]
                 #小低背离止跌后做多
                 if (df_30mins['close'] < df_30mins['vwap']*1.002).all() and df_30mins['close'].iloc[0] <= close_low_30mins \
                     and (len(df) - close_low_30mins)%10 == 0:
                     logger.info("ZHUDUO_XIAODI_ZHIDIE_30MINS_LONG with price: %f at %s" % (df_30mins['close'].iloc[-1], now))
+                    if long_price_30mins == 0:
+                        long_price_30mins = df["close"].iloc[-1]
 
             # 止盈和风控
             if (df_zz["close"] > df_zz["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.01:
@@ -200,11 +203,25 @@ while True:
                         logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:
                         logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
-                elif len(df) - close_low_index == 20:
+                    if long_price_30mins != 0:
+                        sum_profit += df["close"].iloc[-1] - long_price_30mins
+                        long_price_30mins = 0.0
+                elif len(df) - close_high_index == 20:
                     if close_high > df["open"].iloc[0]*1.015 and (df_zz["close"] > df_zz["vwap"]).all()*1.008:
                         logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:
                         logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
+                    #if long_price_30mins != 0:
+                    #    sum_profit += df["close"].iloc[-1] - long_price_30mins
+                    #    long_price_30mins = 0.0
+
+        if int(curHour) == 14 and int(curMinute) == 45:
+            # 强制平仓，并统计利润
+            if long_price_30mins != 0:
+                sum_profit += df["close"].iloc[-1] - long_price_30mins
+                long_price_30mins = 0.0
+            logger.info("LONG profit at %s is %f." % (now, sum_profit))
+
 
 api.close()
 logger.removeHandler(fh)

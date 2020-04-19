@@ -220,7 +220,7 @@ while True:
             if short_price_18mins != 0:
                 sum_profit += short_price_18mins - df["close"].iloc[-1]
                 short_price_18mins = 0.0
-            logger.info("SHORT profit at %s is %f." % (now, sum_profit))
+            logger.info("######SHORT profit at %s is %f." % (now, sum_profit))
 
 
 api.close()

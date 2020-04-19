@@ -232,7 +232,7 @@ while True:
             if long_price_30mins != 0:
                 sum_profit += df["close"].iloc[-1] - long_price_30mins
                 long_price_30mins = 0.0
-            logger.info("LONG profit at %s is %f." % (now, sum_profit))
+            logger.info("######LONG profit at %s is %f." % (now, sum_profit))
 
 api.close()
 logger.removeHandler(fh)

@@ -165,12 +165,12 @@ while True:
                 close_low_index_30mins, close_low_30mins = min(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
                 close_high_index_30mins, close_high_30mins = max(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
 
-
                 #最近半小时偏多走稳则追多,考虑分时计算误差;每隔10分钟报一次做多信号
-                if (df_30mins['close'] > df_30mins['vwap']*0.998).all() and (df_30mins['close'] < df_30mins['vwap']*1.008).all() \
-                    and close_high > close_high_30mins and (len(df) - close_high_index)%10 == 0:
+                if (df_30mins['close'] > df_30mins['vwap']*0.998).all() and (df_30mins['close'] < df_30mins['vwap']*1.02).all() \
+                    and len(df) - close_high_index == 40:
                     logger.info("ZHUDUO_PIANDUO_ZOUWEN_30MINS_LONG above price: %f at %s" % (df_30mins['vwap'].iloc[-1], now))
                     winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
+
                 #小低背离止跌后做多
                 if (df_30mins['close'] < df_30mins['vwap']*1.002).all() and df_30mins['close'].iloc[0] <= close_low_30mins \
                     and (len(df) - close_low_30mins)%10 == 0:
@@ -181,16 +181,15 @@ while True:
             if (df_zz["close"] > df_zz["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.01:
                 #大多高位滞涨,禁止追多
                 if len(df) - close_high_index == 30:
-                    if close_high > df["open"].iloc[0]*1.015 and df_zz["close"] > df_zz["vwap"]).all()*1.008:
+                    if close_high > df["open"].iloc[0]*1.015 and (df_zz["close"] > df_zz["vwap"]).all()*1.008:
                         logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:
                         logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
                 elif len(df) - close_high_index == 20:
-                    if close_high > df["open"].iloc[0]*1.015 and df_zz["close"] > df_zz["vwap"]).all()*1.008:
+                    if close_high > df["open"].iloc[0]*1.015 and (df_zz["close"] > df_zz["vwap"]).all()*1.008:
                         logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:
                         logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
-
 
 api.close()
 logger.removeHandler(fh)

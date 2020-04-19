@@ -3,10 +3,12 @@
 __author__ = 'Golden'
 
 '''
-日内交易信号 - 开盘即有日内低点的主多模型
+日内交易信号 - 开盘即有日内低点的强支撑位主多模型
 1. 适用于
-   1.1 主多偏多品种的趋多日主多（标准步步高，弩末等）
-   1.2 主多偏多品种支撑位低开，或急空背离后次日反抽主多
+   1.1 主多品种的趋多日主多（标准步步高，弩末等）
+   1.2 偏多震荡品种，一波空止跌后弩末趋多
+   1.3 主多品种低开触及支撑位，或一波急空背离后局部止跌反抽主多
+2. 如果自己对趋多把握大，该策略意义不大；但亦可用于抓自己把握不大相对低位追涨机会
 
 信号提醒：
 1. 参与时机和点位： 开盘即可多，或者等待盘中局部调整受支撑后再相对低位追多
@@ -182,8 +184,8 @@ while True:
                 close_high_index_30mins, close_high_30mins = max(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
 
                 #最近半小时偏多走稳则追多,考虑分时计算误差;每隔10分钟报一次做多信号
-                if (df_30mins['close'] > df_30mins['vwap']*0.998).all() and (df_30mins['close'] < df_30mins['vwap']*1.008).all() \
-                    and close_high > close_high_30mins and (len(df) - close_high_index)%10 == 0:
+                if (df_30mins['close'] > df_30mins['vwap']*0.998).all() and (df_30mins['close'] < df_30mins['vwap']*1.02).all() \
+                    and len(df) - close_high_index == 40:
                     logger.info("ZHUDUO_PIANDUO_ZOUWEN_30MINS_LONG above price: %f at %s" % (df_30mins['vwap'].iloc[-1], now))
                 #小低背离止跌后做多
                 if (df_30mins['close'] < df_30mins['vwap']*1.002).all() and df_30mins['close'].iloc[0] <= close_low_30mins \

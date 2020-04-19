@@ -3,21 +3,24 @@
 __author__ = 'Golden'
 
 '''
-日内做多交易信号 - 开盘即直接震荡小低或小空触及强支撑位主多模型
-1. 适用于
-   1.1 主多或偏多品种的多趋势：一波多未大背离和滞涨 + （收阴或主多中） + 接近支撑位 + 次日先小低或小空触及支撑位止跌做多
-   1.2 非偏空震荡品种一波蓄势不足的空背离后，次日先相对低位走稳做多
-2. 这里只捕捉先低做多信号，偏多走稳的追多信号请配合long_model_zhuduo.py使用
+日内做多交易信号
+1. 先或中小低或空触及强支撑位后的做多模型
+2. 适用于：
+   2.1 偏多品种第一波多未大背离和滞涨，次日先小低或空触及5日线的震荡多
+   2.2 偏多品种第一波多之后的步步高趋多
+   2.3 偏多品种空背离触及强支撑位且明确止跌之后的震荡多：当日收阴 + 次日小低或空触及支撑位
+   2.4 偏多品种空背离触及强支撑位且明确止跌之后的弩末趋多（趋3， 趋5，趋7等，以相对低位止跌为佳）
+3. 强趋多机会自己把握，有时也要结合long_model_zhuduo.py使用
 
 信号提醒：
-1. 参与时机和点位： 长期相对低位止跌 + 分时之下小低或小空做多；或者开盘小空触及支撑做多
+1. 参与时机和点位： 长期相对低位止跌 + 分时之下小低或小空 | 或者开盘小空触及支撑做多
 2. 止盈：中大多背离滞涨止盈，小多背离局部止盈等待再次多机会
 
 风险控制：
 1. 先大多背离滞涨止盈；后续视品种情况而定：偏多品种偏多调整走稳后可再做多
 2. 不做空，谨慎追多
 
-实盘验证：
+回测验证：
 '''
 
 import datetime, time, sys, os.path
@@ -170,11 +173,21 @@ while True:
                 close_low_index_30mins, close_low_30mins = min(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
                 close_high_index_30mins, close_high_30mins = max(enumerate(df_30mins["close"]), key=operator.itemgetter(1))
 
-                #低点低于开盘价 + 最近半小时小低止跌, 每隔10分钟报一次低多信号
-                if close_low < df["close"].iloc[0]  and (df_30mins['close'] < df_30mins['vwap']*1.002).all() \
-                    and (len(df) - close_low_30mins)%10 == 0:
+                #低点低于开盘价 + 接近支撑位 + 最近半小时小低或小空止跌, 每隔10分钟报一次低多信号
+                if close_low < df["open"].iloc[0] and close_low < ZHICHENG * 1.01 and (len(df) - close_low_30mins)%10 == 0:
+                    if (df_30mins['close'] < df_30mins['vwap']*0.995).all() and :
+                        logger.info("XIAN_DAKONG_BEILI_ZHIDIE_30MINS_LONG with price: %f at %s" % (df['vwap'].iloc[-1], now))
+                        winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
+                    elif (df_30mins['close'] < df_30mins['vwap']*1.002).all():
+                        logger.info("XIAN_XIAODI_ZHIDIE_30MINS_LONG below price: %f at %s" % (df['vwap'].iloc[-1], now))
+                        winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
+
+                #低点低于开盘价 + 最近半小时大空止跌, 每隔10分钟报一次低多信号
+                if close_low < df["open"].iloc[0]  and (df_30mins['close'] < df_30mins['vwap']*1.002).all() \
+                    and close_low < ZHICHENG * 1.01 and (len(df) - close_low_30mins)%10 == 0:
                     logger.info("XIAN_XIAODI_ZHIDIE_30MINS_LONG below price: %f at %s" % (df['vwap'].iloc[-1], now))
                     winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
+                
 
             # 止盈和风控
             if (df_zd["close"] > df_zd["vwap"]*1.006).all() and close_high > df_zz["vwap"].iloc[0] *1.015:

@@ -199,18 +199,18 @@ while True:
                         logger.info("XIAN_KONG_ZHIDIE_30mins at %s, ZHIYING, dengdai zaiciKONG signal" % (now))
                     else:
                         logger.info("KONGBEILI_ZHIDIE_30mins at %s, ZHIYING for next short signal" % (now))
-                        if short_price_30mins != 0:
-                            sum_profit += short_price_30mins - df["close"].iloc[-1]
-                            short_price_30mins = 0.0
+                    if short_price_30mins != 0:
+                        sum_profit += short_price_30mins - df["close"].iloc[-1]
+                        short_price_30mins = 0.0
                     #logger.info("%f, %f" % (YALIWEI, close_high))
                 elif len(df) - close_low_index == 20:
                     if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
                         logger.info("XIAN_KONG_ZHIDIE_20mins at %s, ZHIYING, dengdai zaiciKONG signal" % (now))
                     else:
                         logger.info("KONGBEILI_ZHIDIE_20mins at %s, ZHIYING for next short signal" % (now))
-                        if short_price_18mins != 0:
-                            sum_profit += short_price_18mins - df["close"].iloc[-1]
-                            short_price_18mins = 0.0
+                    if short_price_18mins != 0:
+                        sum_profit += short_price_18mins - df["close"].iloc[-1]
+                        short_price_18mins = 0.0
 
         if int(curHour) == 14 and int(curMinute) == 45:
             # 强制平仓，并统计利润

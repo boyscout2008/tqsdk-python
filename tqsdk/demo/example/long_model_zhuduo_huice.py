@@ -193,17 +193,18 @@ while True:
                     logger.info("ZHUDUO_XIAODI_ZHIDIE_30MINS_LONG with price: %f at %s" % (df_30mins['close'].iloc[-1], now))
 
             # 止盈和风控
-            if (df_zd["close"] > df_zd["vwap"]*1.008).all() and close_high > df_zz["vwap"].iloc[0] *1.015:
-                #先大多高位滞涨,禁止追多
+            if (df_zz["close"] > df_zz["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.01:
+                #大多高位滞涨,禁止追多
                 if len(df) - close_high_index == 30:
-                     logger.info("DA_DUO_ZHIZHANG_30mins at %s, ZHIYING and wait next good long signal" % (now))
-
+                    if close_high > df["open"].iloc[0]*1.015 and (df_zz["close"] > df_zz["vwap"]).all()*1.008:
+                        logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
+                    else:
+                        logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
                 elif len(df) - close_low_index == 20:
-                    logger.info("DA_DUO_ZHIZHANG_20mins at %s, ZHIYING and wait next good long signal" % (now))
-            elif (df_zd["close"] > df_zd["vwap"]*1.002).all() and close_high > df_zz["vwap"].iloc[0] *1.01:
-                #先小多滞涨,局部止盈
-                if len(df) - close_high_index == 30:
-                     logger.info("XIAO_DUO_ZHIZHANG_30mins at %s, JUBU_ZHIYING and wait next long signal" % (now))
+                    if close_high > df["open"].iloc[0]*1.015 and (df_zz["close"] > df_zz["vwap"]).all()*1.008:
+                        logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
+                    else:
+                        logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
 
 api.close()
 logger.removeHandler(fh)

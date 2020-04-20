@@ -50,6 +50,7 @@ parser.add_argument('--YEAR')
 parser.add_argument('--MONTH')
 parser.add_argument('--DAY')
 parser.add_argument('--YALIWEI')
+parser.add_argument('--IS_TESTING')
 parser.add_argument('--LAST_CLOSE')
 parser.add_argument('--LAST_SETTLEMENT')
 
@@ -79,6 +80,11 @@ if args.YALIWEI != None:
     YALIWEI = float(args.YALIWEI)
 else:
     exit(-1)
+
+if args.IS_TESTING != None:
+    IS_TESTING = bool(args.IS_TESTING)
+else:
+    IS_TESTING = False
 
 if args.LAST_CLOSE != None:
     LAST_CLOSE = float(args.LAST_CLOSE)
@@ -220,7 +226,11 @@ while True:
             if short_price_18mins != 0:
                 sum_profit += short_price_18mins - df["close"].iloc[-1]
                 short_price_18mins = 0.0
-            logger.info("######SHORT profit at %s is %f." % (now, sum_profit))
+            if IS_TESTING:
+                logger.info("******SHORT profit at %s is %f." % (now, sum_profit))
+            else:
+                logger.info("######SHORT profit at %s is %f." % (now, sum_profit))
+
 
 
 api.close()

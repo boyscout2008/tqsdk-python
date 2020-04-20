@@ -51,6 +51,7 @@ parser.add_argument('--YEAR')
 parser.add_argument('--MONTH')
 parser.add_argument('--DAY')
 parser.add_argument('--ZHICHENG')
+parser.add_argument('--IS_TESTING')
 parser.add_argument('--LAST_CLOSE')
 parser.add_argument('--LAST_SETTLEMENT')
 
@@ -80,6 +81,11 @@ if args.ZHICHENG != None:
     ZHICHENG = float(args.ZHICHENG)
 else:
     exit(-1)
+
+if args.IS_TESTING != None:
+    IS_TESTING = bool(args.IS_TESTING)
+else:
+    IS_TESTING = False
 
 if args.LAST_CLOSE != None:
     LAST_CLOSE = float(args.LAST_CLOSE)
@@ -220,8 +226,10 @@ while True:
             if long_price_30mins != 0:
                 sum_profit += df["close"].iloc[-1] - long_price_30mins
                 long_price_30mins = 0.0
-            logger.info("######LONG profit at %s is %f." % (now, sum_profit))
-
+            if IS_TESTING:
+                logger.info("******LONG profit at %s is %f." % (now, sum_profit))
+            else:
+                logger.info("######LONG profit at %s is %f." % (now, sum_profit))
 
 api.close()
 logger.removeHandler(fh)

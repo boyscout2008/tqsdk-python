@@ -191,9 +191,5 @@ while True:
                     else:
                         logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
 
-        if int(curHour) == 9 and int(curMinute) == 15:
-            # tmp test for warning
-            winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
-
 api.close()
 logger.removeHandler(fh)

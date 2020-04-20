@@ -141,6 +141,7 @@ signal_interval = 10
 
 
 long_price_30mins = 0.0
+long_price_xiandi = 0.0
 sum_profit = 0.0
 kaipan_di = False
 
@@ -187,6 +188,8 @@ while True:
             if len(df) <= 30 and close_low < df["open"].iloc[0]*0.992 and close_low < df_zd["vwap"].iloc[0]*0.997 and not kaipan_di:
                 kaipan_di = True
                 logger.info("KAIPAN_XIAOKONG_ZHICHENG_LONG below price: %f at %s, or wait 10mins after zhan shang fenshi" % (close_low, now))
+                if long_price_xiandi == 0:
+                    long_price_xiandi = df["close"].iloc[-1]
 
             # 长期低于分时但无新低：则分时之下小低或小空局部止跌做多
             # 无先多背离 + 接近分时或低于分时止跌开多
@@ -232,12 +235,18 @@ while True:
                         logger.info("XIAN_DADUO_ZHIZHANG_20mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
                     else:
                         logger.info("DUO_ZHIZHANG_20mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
+                    if long_price_xiandi != 0:
+                        sum_profit += df["close"].iloc[-1] - long_price_xiandi
+                        long_price_xiandi = 0.0
 
         if int(curHour) == 14 and int(curMinute) == 45:
             # 强制平仓，并统计利润
             if long_price_30mins != 0:
                 sum_profit += df["close"].iloc[-1] - long_price_30mins
                 long_price_30mins = 0.0
+            if long_price_xiandi != 0:
+                sum_profit += df["close"].iloc[-1] - long_price_xiandi
+                long_price_xiandi = 0.0
             if IS_TESTING:
                 logger.info("******LONG profit at %s is %f." % (now, sum_profit))
             else:

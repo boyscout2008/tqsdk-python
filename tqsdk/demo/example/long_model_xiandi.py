@@ -189,19 +189,19 @@ while True:
                         logger.info("XIAN_XIAODI_ZHICHENG_5MINS_LONG above price: %f at %s" % (close_low, now))
                         winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
 
-            # 止盈和风控
-            if (df_zz["close"] > df_zz["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.008:
-                #先大多高位滞涨,禁止追多
-                if len(df) - close_high_index == 30:
-                    if (close_low > ZHICHENG*1.01 or close_low > df["open"].iloc[0]*0.995) and close_high > df["open"].iloc[0]*1.015:
-                        logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
-                    else:
-                        logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
-                elif len(df) - close_high_index == 20:
-                    if (close_low > ZHICHENG*1.01 or close_low > df["open"].iloc[0]*0.995) and close_high > df["open"].iloc[0]*1.015:
-                        logger.info("XIAN_DADUO_ZHIZHANG_20mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
-                    else:
-                        logger.info("DUO_ZHIZHANG_20mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
+        # 止盈和风控
+        if (df_zz["close"] > df_zz["vwap"]).all() and close_high > df_zz["vwap"].iloc[0] *1.008:
+            #先大多高位滞涨,禁止追多
+            if len(df) - close_high_index == 30:
+                if (close_low > ZHICHENG*1.01 or close_low > df["open"].iloc[0]*0.995) and close_high > df["open"].iloc[0]*1.015:
+                    logger.info("XIAN_DADUO_ZHIZHANG_30mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
+                else:
+                    logger.info("DUO_ZHIZHANG_30mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
+            elif len(df) - close_high_index == 20:
+                if (close_low > ZHICHENG*1.01 or close_low > df["open"].iloc[0]*0.995) and close_high > df["open"].iloc[0]*1.015:
+                    logger.info("XIAN_DADUO_ZHIZHANG_20mins at %s, JINZHI_ZHUIDUO or CHAODUANKONG" % (now))
+                else:
+                    logger.info("DUO_ZHIZHANG_20mins at %s, ZHIYING and jinshen wait next good long signal" % (now))
 
 
 api.close()

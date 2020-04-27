@@ -174,20 +174,20 @@ while True:
                         logger.info("ZHUKONG_ZHIZHANG_30MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
                         winsound.PlaySound('p2.wav', winsound.SND_FILENAME)
 
-            # 止盈和风控
-            if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
-                #先空,禁止做空
-                if len(df) - close_low_index == 30:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("DA_KONG_ZHIDIE_30mins at %s, ZHIYING, NO MORE SHORT" % (now))
-                    else:
-                        logger.info("XIAO_KONG_ZHIDIE_30mins at %s, ZHIYING and wait next short signal" % (now))
-                    #logger.info("%f, %f" % (YALIWEI, close_high))
-                elif len(df) - close_low_index == 20:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("DA_KONG_ZHIDIE_20mins at %s, ZHIYING, NO MORE SHORT" % (now))
-                    else:
-                        logger.info("XIAO_KONG_ZHIDIE_20mins at %s, ZHIYING and wait next short signal" % (now))
+        # 止盈和风控
+        if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
+            #先空,禁止做空
+            if len(df) - close_low_index == 30:
+                if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
+                    logger.info("DA_KONG_ZHIDIE_30mins at %s, ZHIYING, NO MORE SHORT" % (now))
+                else:
+                    logger.info("XIAO_KONG_ZHIDIE_30mins at %s, ZHIYING and wait next short signal" % (now))
+                #logger.info("%f, %f" % (YALIWEI, close_high))
+            elif len(df) - close_low_index == 20:
+                if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
+                    logger.info("DA_KONG_ZHIDIE_20mins at %s, ZHIYING, NO MORE SHORT" % (now))
+                else:
+                    logger.info("XIAO_KONG_ZHIDIE_20mins at %s, ZHIYING and wait next short signal" % (now))
 
 
 api.close()

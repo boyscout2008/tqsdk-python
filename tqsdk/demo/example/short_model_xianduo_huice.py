@@ -203,25 +203,25 @@ while True:
                     #target_pos.set_target_volume(current_volume)
                     logger.info("XIAN_XIANGDUOorGAO_ZHENDANG_18MINS_SHORT above price: %f at %s" % (df["close"].iloc[-1], now))
 
-            # 止盈和风控
-            if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
-                #先空,禁止做空
-                if len(df) - close_low_index == 30:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("XIAN_KONG_ZHIDIE_30mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
-                    else:
-                        logger.info("KONGBEILI_ZHIDIE_30mins at %s, ZHIYING" % (now))
-                    if short_price_30mins != 0:
-                        sum_profit += short_price_30mins - df["close"].iloc[-1]
-                        short_price_30mins = 0.0
-                elif len(df) - close_low_index == 20:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("XIAN_KONG_ZHIDIE_20mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
-                    else:
-                        logger.info("KONGBEILI_ZHIDIE_20mins at %s, ZHIYING" % (now))
-                    if short_price_18mins != 0:
-                        sum_profit += short_price_18mins - df["close"].iloc[-1]
-                        short_price_18mins = 0.0
+        # 止盈和风控
+        if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
+            #先空,禁止做空
+            if len(df) - close_low_index == 30:
+                if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
+                    logger.info("XIAN_KONG_ZHIDIE_30mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
+                else:
+                    logger.info("KONGBEILI_ZHIDIE_30mins at %s, ZHIYING" % (now))
+                if short_price_30mins != 0:
+                    sum_profit += short_price_30mins - df["close"].iloc[-1]
+                    short_price_30mins = 0.0
+            elif len(df) - close_low_index == 20:
+                if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
+                    logger.info("XIAN_KONG_ZHIDIE_20mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
+                else:
+                    logger.info("KONGBEILI_ZHIDIE_20mins at %s, ZHIYING" % (now))
+                if short_price_18mins != 0:
+                    sum_profit += short_price_18mins - df["close"].iloc[-1]
+                    short_price_18mins = 0.0
         
         if int(curHour) == 14 and int(curMinute) == 45:
             # 强制平仓，并统计利润

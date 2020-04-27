@@ -179,10 +179,10 @@ while True:
 
         #logger.info("CURRENT PRICES:  close = %f, vwap = %f, day_open = %f at %s!" % (df["close"].iloc[-1], df["vwap"].iloc[-1], df["open"].iloc[0], now))
 
-        if not (int(curHour) > 13 and int(curHour) < 15):# 先或中, 不参与14：00之后尾盘行情
-            df_zz = df[close_high_index:len(df)]
-            df_zd = df[close_low_index:len(df)]
+        df_zz = df[close_high_index:len(df)]
+        df_zd = df[close_low_index:len(df)]
 
+        if not (int(curHour) > 13 and int(curHour) < 15):# 先或中, 不参与14：00之后尾盘行情
             #适用明确承压品种：昨日收阳小背离结算价，且承压阻力位
             #算法：无先空 + 接近阻力位 + 相对高位震荡高于分时开空 （一般是开盘，可能在盘中出现）
             if close_low > df["open"].iloc[0]*0.985 and (close_high > YALIWEI*0.992 or close_high > df["open"].iloc[0])\
@@ -202,25 +202,28 @@ while True:
                     if short_price_18mins == 0:
                         short_price_18mins = df["close"].iloc[-1]
 
-            # 止盈和风控
-            if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
-                #先或中大空止跌,禁止做空；局部止跌，局部止盈
-                if len(df) - close_low_index == 30:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("DA_KONG_ZHIDIE_30mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
-                    else:
-                        logger.info("KONGBEILI_ZHIDIE_30mins at %s, JUBU_ZHIYING" % (now))
-                    if short_price_30mins != 0:
-                        sum_profit += short_price_30mins - df["close"].iloc[-1]
-                        short_price_30mins = 0.0
-                elif len(df) - close_low_index == 20:
-                    if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
-                        logger.info("DA_KONG_ZHIDIE_20mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
-                    else:
-                        logger.info("KONGBEILI_ZHIDIE_20mins at %s, JUBU_ZHIYING" % (now))
-                    if short_price_18mins != 0:
-                        sum_profit += short_price_18mins - df["close"].iloc[-1]
-                        short_price_18mins = 0.0
+        # 止盈和风控
+        # 两个bug：一是不能限制时间，二是要参考局部低点，而不是日内低点
+        # 第二个bug不是bug，而是根本就不该选取该策略来做空，因为当日先高也要收阳，盘中不会有新低,暂时不改，就交给强平吧
+        if (df_zd["close"]<df_zd["vwap"]).all() and close_low < df_zd["vwap"].iloc[0] *0.996:
+            #先或中大空止跌,禁止做空；局部止跌，局部止盈
+            if len(df) - close_low_index == 30:
+                if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
+                    logger.info("DA_KONG_ZHIDIE_30mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
+                else:
+                    logger.info("KONGBEILI_ZHIDIE_30mins at %s, JUBU_ZHIYING" % (now))
+                if short_price_30mins != 0:
+                    sum_profit += short_price_30mins - df["close"].iloc[-1]
+                    short_price_30mins = 0.0
+            elif len(df) - close_low_index == 20:
+                if (close_high < YALIWEI*0.995 or close_high < df["open"].iloc[0]) and close_low < df["open"].iloc[0]*0.985:
+                    logger.info("DA_KONG_ZHIDIE_20mins at %s, JINZHI_zuokong or CHAODUANDUO" % (now))
+                else:
+                    logger.info("KONGBEILI_ZHIDIE_20mins at %s, JUBU_ZHIYING" % (now))
+                if short_price_18mins != 0:
+                    sum_profit += short_price_18mins - df["close"].iloc[-1]
+                    short_price_18mins = 0.0
+
         if int(curHour) == 14 and int(curMinute) == 45:
             # 强制平仓，并统计利润
             if short_price_30mins != 0:
